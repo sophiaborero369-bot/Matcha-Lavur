@@ -213,23 +213,7 @@
         <p id="deliveryHint" class="muted">Drinks and sweets are available in Davao City. Powder and merchandise deliver in 2–4 days.</p>
 
         <h4>Preferred Payment</h4>
-        <label class="opt"><input type="radio" name="pay" value="cod" checked> Cash on Delivery</label>
-        <label class="opt"><input type="radio" name="pay" value="ewallet"> Payment Center / E-Wallet</label>
-        <div class="sub" id="sub-ewallet" hidden>
-          <div class="seg"><label><input type="radio" name="wallet" value="GCash" checked> GCash</label><label><input type="radio" name="wallet" value="Maya"> Maya</label><label><input type="radio" name="wallet" value="PayPal"> PayPal</label></div>
-          <input id="wName" placeholder="Account name">
-          <input id="walletNo" placeholder="GCash mobile number (09XXXXXXXXX)" inputmode="numeric">
-          <input id="walletPin" type="password" placeholder="MPIN (4 digits)" maxlength="4" inputmode="numeric" autocomplete="off">
-          <small class="muted">You will confirm this payment with a one-time password (OTP).</small>
-        </div>
-        <label class="opt"><input type="radio" name="pay" value="bank"> Online Banking</label>
-        <div class="sub" id="sub-bank" hidden>
-          <select id="bankName"><option>UnionBank</option><option>BDO</option><option>BPI</option><option>Metrobank</option><option>Landbank</option><option>Security Bank</option></select>
-          <input id="bName" placeholder="Account name (as shown on your card)">
-          <input id="bankNo" placeholder="Account / card number (10 to 16 digits)" inputmode="numeric" maxlength="16">
-          <div class="two"><input id="bExp" placeholder="Expiry date (MM/YY)" maxlength="5" inputmode="numeric"><input id="bCvv" type="password" placeholder="CVV" maxlength="4" inputmode="numeric" autocomplete="off"></div>
-          <small class="muted">You will confirm this payment with a one-time password (OTP).</small>
-        </div>
+        <p class="muted">Cash on delivery or cash on pickup. Online payments are not currently available.</p>
 
         <h4>Voucher or Discount</h4>
         <div class="seg"><label><input type="radio" name="promo" value="none" checked> None</label><label><input type="radio" name="promo" value="voucher"> Voucher</label><label><input type="radio" name="promo" value="discount"> Discount</label></div>
@@ -244,7 +228,7 @@
         <div class="row"><span>Voucher / Discount</span><span id="sDisc"></span></div>
         <div class="row total"><span>Total Amount</span><span id="sTotal"></span></div>
         <button class="btn big">Place Order</button>
-        <p class="secure">Secure checkout. Your payment details are never saved.</p>
+        <p class="secure">No online payment details are collected.</p>
         <p id="coErr" class="err"></p>
       </div>
     </form>
@@ -320,10 +304,10 @@
     </div>
     <form class="card" id="csForm">
       <h4>Customer Service</h4>
-      <p class="muted">Email: support@matchalavur.com<br>Phone: 09XX XXX XXXX<br>Mon to Sat, 9AM to 6PM</p>
+      <p class="muted">Send your concern to the owner. Sign in to submit a support message.<br>Mon to Sat, 9AM to 6PM</p>
       <select id="csTopic"><option>Order issue</option><option>Payment problem</option><option>Return / Refund</option><option>Account help</option><option>Other</option></select>
-      <textarea id="csMsg" rows="4" placeholder="Describe your concern..." required></textarea>
-      <button class="btn">Submit Ticket</button>
+      <textarea id="csMsg" rows="4" maxlength="3900" placeholder="Describe your concern..." required></textarea>
+      <button class="btn">Send to Owner</button>
       <p id="csDone" class="ok"></p>
     </form>
   </div>
@@ -347,26 +331,6 @@
   </form>
 </div>
 
-<div class="modal" id="socModal" hidden>
-  <form class="modal-card" id="socForm">
-    <h4 id="socTitle">Continue</h4>
-    <p class="muted">Enter the details of your account to continue.</p>
-    <input id="socName" placeholder="Full name" required>
-    <input id="socEmail" type="email" placeholder="Email address" required>
-    <div class="modal-actions"><button type="button" class="btn ghost" data-close="socModal">Cancel</button><button class="btn">Continue</button></div>
-  </form>
-</div>
-
-<div class="modal" id="otpModal" hidden>
-  <form class="modal-card" id="otpForm">
-    <h4>Confirm Payment</h4>
-    <p class="muted">Amount to pay: <b id="otpAmt"></b><br>Via: <span id="otpTo"></span></p>
-    <p class="muted">Enter the 6-digit one-time password (OTP) sent to your registered number. Demo OTP: <b>123456</b></p>
-    <input id="otpInput" placeholder="6-digit OTP" maxlength="6" inputmode="numeric" autocomplete="off">
-    <p id="otpErr" class="err"></p>
-    <div class="modal-actions"><button type="button" class="btn ghost" id="otpCancel">Pay Later</button><button class="btn">Confirm Payment</button></div>
-  </form>
-</div>
 <div class="modal" id="imgModal" hidden>
   <div class="modal-card img-card">
     <div id="imgFull" class="img-full"></div>
@@ -379,6 +343,8 @@
   </div>
 </div>
 <div id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

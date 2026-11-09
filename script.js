@@ -1,9 +1,6 @@
 /* ===== MATCHA LAVUR - script.js ===== */
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const peso = n => '₱' + Number(n).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
-const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
-
 /* ---------- DATA (edit names, prices, images here) ---------- */
 const PRODUCTS = [
   {id:1,name:'Blueberry Matcha Spring Latte',cat:'Drinks',price:180,rate:4.9,img:'Blueberry_Matcha Spring Latte.jfif',desc:'Fresh blueberries blended with creamy milk and layered with iced ceremonial matcha.'},
@@ -58,10 +55,10 @@ const DISCOUNTS = [
 const SHIP = {std: 49, exp: 99};
 const OWNER_EMAIL = 'matchalavur@gmail.com';
 const FAQ = [
-  ['How do I place an order?', 'Add items to your cart, open Purchase, fill in your details, choose a payment method and press Place Order.'],
-  ['What payment methods are accepted?', 'Cash on Delivery, e-wallets (GCash, Maya and PayPal) and online banking (UnionBank, BDO, BPI and more).'],
+  ['How do I place an order?', 'Add items to your cart, open Purchase, fill in your details, choose delivery or pickup, and press Place Order.'],
+  ['What payment methods are accepted?', 'Cash on Delivery or cash on pickup. Online payments are not currently available.'],
   ['How do vouchers and discounts work?', 'On the Purchase page choose either a voucher or a discount. Only one can be used per order and each has a minimum spend.'],
-  ['Can I cancel my order?', 'Yes, while it is in To Pay or To Ship. Go to My Purchase and press Cancel Order.'],
+  ['Can I cancel my order?', 'Yes, while it is in To Ship. Go to My Purchase and press Cancel Order.'],
   ['How do I return or refund an item?', 'After an order is Completed, open My Purchase > Completed and press Request Return/Refund.'],
   ['How long does delivery take?', 'In Davao City, drinks and sweets arrive in minutes. Powder and merchandise deliver in 2 to 4 days. Outside Davao City, only powder and merchandise can be ordered and delivery takes 2 to 4 days. Pickup is also available.']
 ];
@@ -73,16 +70,52 @@ const SEED_REVIEWS = [
   {id:'s5', name:'Jen L.', pid:6, stars:3, text:'Tasty frappe but it melted a bit on the way. Still good.', img:'', date:'Oct 27, 2026', help:2}
 ];
 const P = id => PRODUCTS.find(p => p.id === id);
-const phImg = (src, label) => `<div class="ph"><img src="${src}" alt=""><span>${label}<br>${src}</span></div>`;
+const phImg = (src, label) => `<div class="ph"><img src="${escapeHtml(src)}" alt=""><span>${escapeHtml(label)}<br>${escapeHtml(src)}</span></div>`;
 const ICON_BAG = '<div class="empty-ic"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8a3 3 0 016 0"/></svg></div>';
 
 /* ---------- STATE ---------- */
-let users = load('ml_users', {}), session = load('ml_session', null), me = null, isAdmin = false;
-let stock = {...Object.fromEntries(PRODUCTS.map(p => [p.id, 20])), ...load('ml_stock', {})};
-let userReviews = load('ml_reviews_user', []), helpful = load('ml_helpful', {});
-let cat = 'all', rating = 0, orderTab = 'To Pay', rateOrder = null, rf = 'all', pfPhoto = null, otpOrder = null, adminCustomer = '', pendingPage = 'home';
-const save = () => store('ml_users', users);
-const saveStock = () => store('ml_stock', stock);
+const supabaseClient = window.supabase.createClient(window.MATCHA_SUPABASE_URL, window.MATCHA_SUPABASE_ANON_KEY);
+let session = null, authUser = null, me = null, isAdmin = false;
+let stock = Object.fromEntries(PRODUCTS.map(p => [p.id, 20]));
+let userReviews = [], reviewVoteCounts = {}, ownerCustomers = [];
+let cat = 'all', rating = 0, orderTab = 'To Ship', rateOrder = null, rf = 'all', pfPhoto = null, adminCustomer = '', pendingPage = 'home', cancelPage = 'home', realtimeChannel = null;
+let saveQueue = Promise.resolve();
+const save = () => {
+  const operation = saveQueue.then(async () => {
+    if (!authUser || !me) return;
+    const profileResult = await supabaseClient.from('profiles').update({
+      full_name: me.name,
+      phone: me.profile.phone,
+      address: me.profile.addr,
+      bio: me.profile.bio,
+      photo_url: me.profile.photo
+    }).eq('id', authUser.id);
+    if (profileResult.error) throw profileResult.error;
+    const cartResult = await supabaseClient.from('cart_items').delete().eq('customer_id', authUser.id);
+    if (cartResult.error) throw cartResult.error;
+    if (me.cart.length) {
+      const result = await supabaseClient.from('cart_items').insert(me.cart.map(item => ({
+        customer_id: authUser.id, product_id: item.id, quantity: item.qty
+      })));
+      if (result.error) throw result.error;
+    }
+    const wishlistResult = await supabaseClient.from('wishlist_items').delete().eq('customer_id', authUser.id);
+    if (wishlistResult.error) throw wishlistResult.error;
+    if (me.wish.length) {
+      const result = await supabaseClient.from('wishlist_items').insert(me.wish.map(id => ({
+        customer_id: authUser.id, product_id: id
+      })));
+      if (result.error) throw result.error;
+    }
+  });
+  saveQueue = operation.catch(showDatabaseError);
+  return operation.then(() => true, () => false);
+};
+async function loadStock() {
+  const {data, error} = await supabaseClient.from('products').select('id,stock');
+  if (error) throw error;
+  stock = Object.fromEntries(data.map(product => [product.id, product.stock]));
+}
 let toastT;
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 3000); }
 document.addEventListener('error', e => { if (e.target.tagName === 'IMG') e.target.remove(); }, true);
@@ -102,66 +135,173 @@ function authMsg(t, ok) { const m = $('#authMsg'); m.textContent = t; m.classNam
 $$('[data-auth]').forEach(b => b.onclick = () => showAuth(b.dataset.auth));
 $('#forgotLink').onclick = e => { e.preventDefault(); showAuth('reset'); };
 $('#backLogin').onclick = e => { e.preventDefault(); showAuth('login'); };
-$('#resetForm').onsubmit = e => {
-  e.preventDefault(); const em = $('#rsEmail').value.trim().toLowerCase();
-  if (!users[em]) return authMsg('No account found with that email.');
-  users[em].pass = $('#rsPass').value; save(); showAuth('login'); authMsg('Password updated. You can log in now.', true);
-};
-const newUser = (name, pass, extra = {}) => ({name, pass, cart: [], orders: [], wish: [], msgs: [], voted: [], profile: {photo: '', phone: '', addr: '', bio: ''}, ...extra});
-$('#signupForm').onsubmit = e => {
-  e.preventDefault();
-  const em = $('#suEmail').value.trim().toLowerCase();
-  if ($('#suPass').value !== $('#suPass2').value) return authMsg('Passwords do not match.');
-  if (users[em]) return authMsg('Email already registered. Please log in.');
-  users[em] = newUser($('#suName').value.trim(), $('#suPass').value); save(); startSession(em);
-};
-$('#loginForm').onsubmit = e => {
-  e.preventDefault();
-  const em = $('#liEmail').value.trim().toLowerCase();
-  if (!users[em] || users[em].pass !== $('#liPass').value) return authMsg('Wrong email or password.');
-  startSession(em);
-};
-let socName = '';
-$('#socBtns').onclick = e => { const b = e.target.closest('[data-soc]'); if (!b) return; socName = b.dataset.soc; $('#socTitle').textContent = 'Continue with ' + socName; $('#socForm').reset(); openModal('socModal'); };
-$('#socForm').onsubmit = e => {
-  e.preventDefault(); const em = $('#socEmail').value.trim().toLowerCase();
-  if (!users[em]) { users[em] = newUser($('#socName').value.trim(), 'social-' + Math.random().toString(36).slice(2), {social: socName}); save(); }
-  closeModal('socModal'); startSession(em);
-};
-function startSession(em) {
-  session = em; store('ml_session', em); me = users[em];
-  isAdmin = em === OWNER_EMAIL;
-  me.profile = me.profile || {photo: '', phone: '', addr: '', bio: ''}; me.voted = me.voted || []; me.msgs = me.msgs || [];
+function showDatabaseError(error) {
+  console.error('Supabase request failed:', error);
+  toast(error.message || 'Database request failed. Please try again.');
+}
+async function loadAccountData(user) {
+  const [profileResult, cartResult, wishlistResult, ordersResult, messagesResult, votesResult] = await Promise.all([
+    supabaseClient.from('profiles').select('*').eq('id', user.id).single(),
+    supabaseClient.from('cart_items').select('product_id,quantity').eq('customer_id', user.id),
+    supabaseClient.from('wishlist_items').select('product_id').eq('customer_id', user.id),
+    supabaseClient.from('orders').select('*,order_items(*)').order('created_at', {ascending: false}),
+    supabaseClient.from('messages').select('*').eq('customer_id', user.id).order('created_at'),
+    supabaseClient.from('review_votes').select('review_id').eq('customer_id', user.id)
+  ]);
+  for (const result of [profileResult, cartResult, wishlistResult, ordersResult, messagesResult, votesResult]) {
+    if (result.error) throw result.error;
+  }
+  const profile = profileResult.data;
+  me = {
+    name: profile.full_name || user.user_metadata?.full_name || user.email,
+    profile: {photo: profile.photo_url || '', phone: profile.phone || '', addr: profile.address || '', bio: profile.bio || ''},
+    cart: cartResult.data.map(item => ({id: item.product_id, qty: item.quantity})),
+    wish: wishlistResult.data.map(item => item.product_id),
+    voted: votesResult.data.map(vote => vote.review_id),
+    msgs: messagesResult.data.map(message => ({id: message.id, from: message.sender_role === 'customer' ? 'me' : 'them', t: message.message, time: new Date(message.created_at).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'})})),
+    orders: ordersResult.data.filter(order => order.customer_id === user.id).map(mapDatabaseOrder)
+  };
+  session = user.email;
+  authUser = user;
+  isAdmin = user.email?.toLowerCase() === OWNER_EMAIL;
   $('#auth').hidden = true; $('#app').hidden = false; $('#loginLink').hidden = true;
   $('#profileBtn').hidden = false; $('#logout').hidden = false; $('#adminNav').hidden = !isAdmin;
-  $('#coName').value = me.name; $('#coEmail').value = em; $('#coPhone').value = me.profile.phone; $('#coAddr').value = me.profile.addr;
-  renderHeader(); go(isAdmin ? 'admin' : pendingPage); pendingPage = 'home'; updateCount(); toast(isAdmin ? 'Welcome, owner!' : 'Welcome to Matcha Lavur!');
+  $('#coName').value = me.name; $('#coEmail').value = user.email; $('#coPhone').value = me.profile.phone; $('#coAddr').value = me.profile.addr;
+  renderHeader(); updateCount(); go(isAdmin ? 'admin' : pendingPage); pendingPage = 'home';
 }
-function startGuest() {
-  me = null; isAdmin = false; session = null;
-  store('ml_session', null);
+function mapDatabaseOrder(order) {
+  return {
+    dbId: order.id, id: order.order_number, date: new Date(order.created_at).toLocaleString(),
+    items: (order.order_items || []).map(item => ({id: item.product_id, qty: item.quantity, price: Number(item.unit_price), name: item.product_name})),
+    total: Number(order.total), sub: Number(order.subtotal), ship: Number(order.shipping_fee),
+    disc: Number(order.discount), code: order.promo_code, method: order.payment_method,
+    delivery: order.delivery_estimate, fulfillment: order.fulfillment, note: order.note,
+    status: order.status, rated: order.rated, name: order.customer_name,
+    addr: order.address, phone: order.phone, email: order.customer_email,
+    customerId: order.customer_id, refundReason: order.refund_reason, refundDecision: order.refund_decision
+  };
+}
+async function startSession(user) {
+  if (authUser?.id === user.id && me) return;
+  try {
+    await loadAccountData(user);
+    if (isAdmin) {
+      const {data, error} = await supabaseClient.from('profiles').select('id,email,full_name').neq('id', user.id);
+      if (error) throw error;
+      ownerCustomers = data;
+    }
+    if (realtimeChannel) await supabaseClient.removeChannel(realtimeChannel);
+    realtimeChannel = supabaseClient.channel('matcha-store-' + user.id)
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'orders'}, () => {
+        if ($('[data-page="admin"]:not([hidden])')) renderAdmin();
+        if ($('[data-page="mypurchase"]:not([hidden])')) renderOrders();
+      })
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'profiles'}, () => {
+        if (isAdmin && $('[data-page="admin"]:not([hidden])')) renderAdmin();
+      })
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'products'}, async () => {
+        try { await loadStock(); renderProducts(); } catch (error) { showDatabaseError(error); }
+      })
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'messages'}, () => {
+        if ($('[data-page="message"]:not([hidden])')) renderChat();
+        if (isAdmin && $('[data-page="admin"]:not([hidden])')) renderAdminChat();
+      })
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'reviews'}, () => {
+        if ($('[data-page="reviews"]:not([hidden])')) renderReviews();
+      })
+      .subscribe();
+    toast(isAdmin ? 'Welcome, owner!' : 'Welcome to Matcha Lavur!');
+  } catch (error) {
+    showDatabaseError(error);
+    authMsg('Could not load your account data: ' + error.message);
+  }
+}
+async function startGuest(signOut = false) {
+  if (realtimeChannel) {
+    await supabaseClient.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+  if (signOut) {
+    const {error} = await supabaseClient.auth.signOut();
+    if (error) return showDatabaseError(error);
+  }
+  me = null; authUser = null; isAdmin = false; session = null;
   $('#auth').hidden = true; $('#app').hidden = false;
   $('#loginLink').hidden = false; $('#profileBtn').hidden = true; $('#logout').hidden = true; $('#adminNav').hidden = true;
   go('home');
 }
 function requireLogin(page = 'home') {
   if (me) return true;
+  cancelPage = $('[data-page]:not([hidden])')?.dataset.page || 'home';
   pendingPage = page;
   showAuth('login'); $('#auth').hidden = false;
   return false;
 }
 $('#loginLink').onclick = () => {
-  pendingPage = $('[data-page]:not([hidden])')?.dataset.page || 'home';
+  cancelPage = pendingPage = $('[data-page]:not([hidden])')?.dataset.page || 'home';
   showAuth('login'); $('#auth').hidden = false;
 };
 $('#cancelLogin').onclick = () => {
-  const page = pendingPage;
-  pendingPage = 'home';
+  const page = cancelPage;
+  pendingPage = cancelPage = 'home';
   startGuest();
   go(page);
 };
-$('#logout').onclick = () => startGuest();
+$('#logout').onclick = () => startGuest(true);
 $('#reviewLogin').onclick = () => requireLogin('reviews');
+$('#signupForm').onsubmit = async e => {
+  e.preventDefault();
+  if ($('#suPass').value !== $('#suPass2').value) return authMsg('Passwords do not match.');
+  const {data, error} = await supabaseClient.auth.signUp({
+    email: $('#suEmail').value.trim().toLowerCase(),
+    password: $('#suPass').value,
+    options: {data: {full_name: $('#suName').value.trim()}}
+  });
+  if (error) return authMsg(error.message);
+  if (data.session) await startSession(data.user);
+  else authMsg('Account created. Confirm your email, then log in.', true);
+};
+$('#loginForm').onsubmit = async e => {
+  e.preventDefault();
+  const {data, error} = await supabaseClient.auth.signInWithPassword({
+    email: $('#liEmail').value.trim().toLowerCase(), password: $('#liPass').value
+  });
+  if (error) return authMsg(error.message);
+  if (data.user) await startSession(data.user);
+};
+$('#resetForm').onsubmit = async e => {
+  e.preventDefault();
+  const {data: sessionData} = await supabaseClient.auth.getSession();
+  if (sessionData.session) {
+    const {data, error} = await supabaseClient.auth.updateUser({password: $('#rsPass').value});
+    if (error) return authMsg(error.message);
+    if (data.user) await startSession(data.user);
+    $('#auth').hidden = true; $('#app').hidden = false;
+    toast('Password updated.');
+    return;
+  }
+  const {error} = await supabaseClient.auth.resetPasswordForEmail($('#rsEmail').value.trim().toLowerCase(), {
+    redirectTo: window.location.origin
+  });
+  if (error) return authMsg(error.message);
+  authMsg('Password reset instructions were sent if this email has an account.', true);
+};
+$('#socBtns').onclick = async e => {
+  const button = e.target.closest('[data-soc]');
+  if (!button) return;
+  const provider = button.dataset.soc.toLowerCase();
+  const {error} = await supabaseClient.auth.signInWithOAuth({provider, options: {redirectTo: window.location.origin}});
+  if (error) authMsg(error.message);
+};
+supabaseClient.auth.onAuthStateChange((event, currentSession) => {
+  window.setTimeout(() => {
+    if (event === 'PASSWORD_RECOVERY') {
+      $('#rsEmail').value = currentSession?.user?.email || '';
+      showAuth('reset');
+      $('#auth').hidden = false;
+    } else if (event === 'SIGNED_OUT' && authUser) startGuest();
+  }, 0);
+});
 
 /* ---------- PROFILE ---------- */
 function renderHeader() { $('#hello').textContent = 'Hi, ' + me.name.split(' ')[0]; setAv($('#avHead'), me.name, me.profile.photo); }
@@ -170,7 +310,10 @@ $('#profileBtn').onclick = () => {
   $('#pfAddr').value = me.profile.addr; $('#pfBio').value = me.profile.bio; setAv($('#pfAv'), me.name, pfPhoto); openModal('profileModal');
 };
 $('#pfPhoto').onchange = e => {
-  const f = e.target.files[0]; if (!f) return; const fr = new FileReader();
+  const f = e.target.files[0]; if (!f) return;
+  if (!f.type.startsWith('image/')) return toast('Choose an image file.');
+  if (f.size > 10 * 1024 * 1024) return toast('Choose an image smaller than 10 MB.');
+  const fr = new FileReader();
   fr.onload = () => { const im = new Image(); im.onload = () => {
     const c = document.createElement('canvas'), s = 180; c.width = c.height = s; const m = Math.min(im.width, im.height);
     c.getContext('2d').drawImage(im, (im.width - m) / 2, (im.height - m) / 2, m, m, 0, 0, s, s);
@@ -179,9 +322,20 @@ $('#pfPhoto').onchange = e => {
 };
 $('#pfRemove').onclick = () => { pfPhoto = ''; $('#pfPhoto').value = ''; setAv($('#pfAv'), $('#pfName').value, ''); };
 $('#profileForm').onsubmit = e => {
-  e.preventDefault(); me.name = $('#pfName').value.trim() || me.name;
-  Object.assign(me.profile, {photo: pfPhoto || '', phone: $('#pfPhone').value.trim(), addr: $('#pfAddr').value.trim(), bio: $('#pfBio').value.trim()});
-  save(); renderHeader(); closeModal('profileModal'); if (isAdmin) renderAdmin(); toast('Profile updated');
+  e.preventDefault();
+  (async () => {
+    me.name = $('#pfName').value.trim() || me.name;
+    if (pfPhoto && pfPhoto.startsWith('data:')) {
+      const blob = await (await fetch(pfPhoto)).blob();
+      const path = `${authUser.id}/${crypto.randomUUID()}.jpg`;
+      const {data, error} = await supabaseClient.storage.from('matcha-profile-photos').upload(path, blob, {contentType: 'image/jpeg'});
+      if (error) return toast(error.message);
+      pfPhoto = supabaseClient.storage.from('matcha-profile-photos').getPublicUrl(data.path).data.publicUrl;
+    }
+    Object.assign(me.profile, {photo: pfPhoto || '', phone: $('#pfPhone').value.trim(), addr: $('#pfAddr').value.trim(), bio: $('#pfBio').value.trim()});
+    if (!await save()) return;
+    renderHeader(); closeModal('profileModal'); if (isAdmin) renderAdmin(); toast('Profile updated');
+  })().catch(showDatabaseError);
 };
 
 /* ---------- NAVIGATION ---------- */
@@ -292,11 +446,6 @@ function calc() {
   disc = Math.min(disc, sub + ship);
   return {sub, ship, disc, code, msg, total: sub + ship - disc};
 }
-function syncWallet() {
-  const w = val('wallet'), pp = w === 'PayPal';
-  $('#walletNo').placeholder = pp ? 'PayPal email address' : w + ' mobile number (09XXXXXXXXX)'; $('#walletNo').type = pp ? 'email' : 'text';
-  $('#walletPin').placeholder = pp ? 'PayPal password' : 'MPIN (4 digits)'; $('#walletPin').maxLength = pp ? 40 : 4;
-}
 function renderCheckout() {
   const empty = !me.cart.length; $('#coEmpty').hidden = !empty; $('#coWrap').hidden = empty; if (empty) return;
   const delivery = deliveryDetails();
@@ -314,115 +463,132 @@ function renderCheckout() {
   $('#coItems').innerHTML = me.cart.map(i => `<div class="item"><span>${i.qty} x ${P(i.id).name}</span><span>${peso(P(i.id).price * i.qty)}</span></div>`).join('');
   $('#sSub').textContent = peso(c.sub); $('#sShip').textContent = peso(c.ship);
   $('#sDisc').textContent = c.disc ? '-' + peso(c.disc) : peso(0); $('#sTotal').textContent = peso(c.total); $('#promoMsg').textContent = c.msg;
-  const pay = val('pay'); $('#sub-ewallet').hidden = pay !== 'ewallet'; $('#sub-bank').hidden = pay !== 'bank'; syncWallet(); syncSteps();
+  syncSteps();
 }
 function syncSteps() {
-  const d = $('#coName').value.trim() && $('#coAddr').value.trim() && $('#coEmail').value.trim() && $('#coPhone').value.trim(), pay = val('pay');
-  const p = pay === 'cod' || (pay === 'ewallet' && $('#wName').value.trim() && $('#walletNo').value.trim() && $('#walletPin').value) || (pay === 'bank' && $('#bName').value.trim() && $('#bankNo').value && $('#bExp').value && $('#bCvv').value);
-  $('#st2').classList.toggle('done', !!d); $('#st3').classList.toggle('done', !!(d && p)); $('#st4').classList.toggle('done', !!(d && p));
+  const detailsComplete = $('#coName').value.trim() && $('#coAddr').value.trim() && $('#coEmail').value.trim() && $('#coPhone').value.trim();
+  $('#st2').classList.toggle('done', !!detailsComplete);
+  $('#st3').classList.toggle('done', !!detailsComplete);
+  $('#st4').classList.toggle('done', !!detailsComplete);
 }
 $('#coForm').addEventListener('change', renderCheckout); $('#coForm').addEventListener('input', () => { renderCheckout(); syncSteps(); });
-$('#bExp').addEventListener('input', e => { let v = e.target.value.replace(/\D/g, '').slice(0, 4); if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2); e.target.value = v; });
 $('#useProfile').onclick = () => {
   $('#coName').value = me.name; $('#coEmail').value = session; $('#coPhone').value = me.profile.phone; $('#coAddr').value = me.profile.addr;
   syncSteps(); toast(me.profile.phone || me.profile.addr ? 'Profile details filled in' : 'Add your phone and address in My Profile first');
 };
-const last4 = s => '•••• ' + String(s).replace(/\D/g, '').slice(-4);
-$('#coForm').onsubmit = e => {
+$('#coForm').onsubmit = async e => {
   e.preventDefault(); const err = $('#coErr'); err.textContent = '';
   const delivery = deliveryDetails();
   if (!delivery.isDavao && delivery.hasFreshItems) return err.textContent = 'Drinks and sweets are only available for Davao City customers. Remove those items to continue.';
-  const unavailable = me.cart.find(i => Number(stock[i.id]) < i.qty);
-  if (unavailable) return err.textContent = `${P(unavailable.id).name} has only ${Math.max(0, Number(stock[unavailable.id]) || 0)} available. Update your cart to continue.`;
-  const phone = $('#coPhone').value.trim(), pay = val('pay'), nm = /^[A-Za-z][A-Za-z .,'-]{1,}$/;
-  if (!/^09\d{9}$/.test(phone)) return err.textContent = 'Enter a valid 11-digit contact number starting with 09.';
-  let method = 'Cash on Delivery';
-  if (pay === 'ewallet') {
-    const w = val('wallet'), no = $('#walletNo').value.trim(), pin = $('#walletPin').value;
-    if (!nm.test($('#wName').value.trim())) return err.textContent = 'Enter the ' + w + ' account name.';
-    if (w === 'PayPal') {
-      if (!/^\S+@\S+\.\S+$/.test(no)) return err.textContent = 'Enter a valid PayPal email address.';
-      if (pin.length < 6) return err.textContent = 'Enter your PayPal password (at least 6 characters).';
-      method = 'PayPal - ' + $('#wName').value.trim() + ' (' + no[0] + '***' + no.slice(no.indexOf('@')) + ')';
-    } else {
-      if (!/^09\d{9}$/.test(no)) return err.textContent = 'Enter a valid ' + w + ' mobile number (09XXXXXXXXX).';
-      if (!/^\d{4}$/.test(pin)) return err.textContent = 'Enter your 4-digit ' + w + ' MPIN.';
-      method = w + ' - ' + $('#wName').value.trim() + ' (' + last4(no) + ')';
-    }
+  if (!/^09\d{9}$/.test($('#coPhone').value.trim())) return err.textContent = 'Enter a valid 11-digit contact number starting with 09.';
+  const totals = calc();
+  const button = $('#coForm').querySelector('button[type="submit"], button:not([type])');
+  button.disabled = true;
+  const {data: orderId, error} = await supabaseClient.rpc('place_matcha_order', {
+    p_customer_name: $('#coName').value.trim(),
+    p_phone: $('#coPhone').value.trim(),
+    p_address: $('#coAddr').value.trim(),
+    p_note: $('#coNote').value.trim(),
+    p_fulfillment: delivery.pickup ? 'Pick Up' : 'Delivery',
+    p_payment_method: delivery.pickup ? 'Cash on Pickup' : 'Cash on Delivery',
+    p_promo_code: totals.code,
+    p_promo_mode: val('promo'),
+    p_items: me.cart.map(item => ({product_id: item.id, quantity: item.qty}))
+  });
+  if (error) {
+    err.textContent = error.message;
+    button.disabled = false;
+    return;
   }
-  if (pay === 'bank') {
-    const ex = $('#bExp').value, m = ex.match(/^(0[1-9]|1[0-2])\/(\d{2})$/), now = new Date();
-    if (!nm.test($('#bName').value.trim())) return err.textContent = 'Enter the account name.';
-    if (!/^\d{10,16}$/.test($('#bankNo').value.trim())) return err.textContent = 'Enter a valid account / card number (10 to 16 digits).';
-    if (!m) return err.textContent = 'Enter the expiry date as MM/YY.';
-    if (new Date(2000 + +m[2], +m[1], 0, 23, 59) < now) return err.textContent = 'This card or account has expired.';
-    if (!/^\d{3,4}$/.test($('#bCvv').value)) return err.textContent = 'Enter the 3 or 4-digit CVV.';
-    method = $('#bankName').value + ' Online Banking - ' + $('#bName').value.trim() + ' (' + last4($('#bankNo').value) + ')';
+  me.cart = [];
+  updateCount();
+  const {data: order, error: orderError} = await supabaseClient.from('orders').select('*,order_items(*)').eq('id', orderId).single();
+  if (orderError) {
+    err.textContent = 'Your order was placed, but its confirmation could not be loaded. Check My Purchase before trying again.';
+    button.disabled = false;
+    orderTab = 'To Ship';
+    go('mypurchase');
+    return;
   }
-  const c = calc(), o = {id: 'ML' + Date.now().toString().slice(-8), date: new Date().toLocaleString(), items: me.cart.map(i => ({...i})), total: c.total, disc: c.disc, code: c.code,
-    method, delivery: delivery.label, fulfillment: delivery.pickup ? 'Pick Up' : delivery.estimate, note: $('#coNote').value.trim(), status: pay === 'cod' ? 'To Ship' : 'To Pay', rated: false, name: $('#coName').value, addr: $('#coAddr').value, phone, owner: session};
-  me.cart.forEach(i => { stock[i.id] = Math.max(0, Number(stock[i.id]) - i.qty); });
-  saveStock();
-  me.orders.unshift(o); me.cart = []; save(); updateCount();
-  ['wName', 'walletNo', 'walletPin', 'bName', 'bankNo', 'bExp', 'bCvv', 'coNote'].forEach(id => $('#' + id).value = '');
-  if (pay === 'cod') { orderTab = 'To Ship'; toast('Order placed!'); go('mypurchase'); } else openOtp(o);
+  me.orders.unshift(mapDatabaseOrder(order));
+  try { await loadStock(); } catch (loadError) { showDatabaseError(loadError); }
+  updateCount();
+  $('#coNote').value = '';
+  toast('Order placed!');
+  orderTab = 'To Ship';
+  go('mypurchase');
 };
-
-/* OTP payment confirmation */
-function openOtp(o) { otpOrder = o; $('#otpAmt').textContent = peso(o.total); $('#otpTo').textContent = o.method; $('#otpInput').value = ''; $('#otpErr').textContent = ''; openModal('otpModal'); $('#otpInput').focus(); }
-$('#otpForm').onsubmit = e => {
-  e.preventDefault(); if ($('#otpInput').value.trim() !== '123456') return $('#otpErr').textContent = 'Incorrect OTP. Please try again.';
-  otpOrder.status = 'To Ship'; save(); closeModal('otpModal'); orderTab = 'To Ship'; toast('Payment successful!'); go('mypurchase');
-};
-$('#otpCancel').onclick = () => { closeModal('otpModal'); orderTab = 'To Pay'; toast('Order saved in To Pay. You can pay anytime.'); go('mypurchase'); };
 
 /* ---------- MY PURCHASE ---------- */
-const TABS = ['To Pay', 'To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive', 'Completed', 'Return/Refund', 'Cancelled', 'To Rate'], FLOW = ['To Pay', 'To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive', 'Completed'];
+const TABS = ['To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive', 'Completed', 'Return/Refund', 'Cancelled', 'To Rate'], FLOW = ['To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive', 'Completed'];
 const ordersOf = t => me.orders.filter(o => t === 'To Rate' ? o.status === 'Completed' && !o.rated : o.status === t);
-function renderOrders() {
-  const act = me.orders.filter(o => ['To Pay', 'To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive'].includes(o.status)).length, spent = me.orders.filter(o => !['Cancelled', 'Return/Refund'].includes(o.status)).reduce((n, o) => n + o.total, 0);
+async function renderOrders() {
+  const {data, error} = await supabaseClient.from('orders').select('*,order_items(*)')
+    .eq('customer_id', authUser.id).order('created_at', {ascending: false});
+  if (error) return showDatabaseError(error);
+  me.orders = data.map(mapDatabaseOrder);
+  const act = me.orders.filter(o => ['To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive'].includes(o.status)).length, spent = me.orders.filter(o => !['Cancelled', 'Return/Refund'].includes(o.status)).reduce((n, o) => n + o.total, 0);
   $('#orderStats').innerHTML = `<div class="stat"><small>Total orders</small><b>${me.orders.length}</b></div><div class="stat"><small>In progress</small><b>${act}</b></div><div class="stat"><small>Total spent</small><b>${peso(spent)}</b></div>`;
   $('#orderTabs').innerHTML = TABS.map(t => { const n = ordersOf(t).length; return `<button class="tab ${t === orderTab ? 'active' : ''}" data-tab="${t}">${t}${n ? ' (' + n + ')' : ''}</button>`; }).join('');
   const q = $('#orderSearch').value.trim().toLowerCase();
   const list = ordersOf(orderTab).filter(o => !q || o.id.toLowerCase().includes(q) || o.items.some(i => P(i.id).name.toLowerCase().includes(q)));
   $('#orderList').innerHTML = list.map(o => `<div class="card order"><div class="order-h"><b>Order #${o.id}</b><span class="muted">${o.date}</span><span class="status st-${o.status.replace(/\W+/g, '')}">${o.status}</span></div>
     ${FLOW.includes(o.status) ? `<div class="track">${(o.fulfillment === 'Pick Up' ? FLOW.filter(s => s !== 'Out for Delivery') : FLOW.filter(s => s !== 'Ready for Pickup')).map((s, i, steps) => `<span class="${i <= steps.indexOf(o.status) ? 'on' : ''}">${s}</span>`).join('')}</div>` : ''}
-    ${o.items.map(i => `<div class="oi">${phImg(P(i.id).img, 'IMG')}<div><b>${P(i.id).name}</b><br><small>Qty ${i.qty} x ${peso(P(i.id).price)}</small></div><b>${peso(P(i.id).price * i.qty)}</b></div>`).join('')}
+    ${o.items.map(i => `<div class="oi">${phImg(P(i.id).img, 'IMG')}<div><b>${P(i.id).name}</b><br><small>Qty ${i.qty} x ${peso(i.price)}</small></div><b>${peso(i.price * i.qty)}</b></div>`).join('')}
     <div class="row"><span>Payment: ${o.method}${o.code ? ' | Promo: ' + o.code : ''}${o.delivery ? ' | ' + o.delivery : ''}${o.fulfillment ? ' | ' + o.fulfillment : ''}</span><b>Total ${peso(o.total)}</b></div>
-    <small class="muted">Ship to: ${o.name}, ${o.addr} | ${o.phone}${o.note ? ' | Note: ' + o.note.replace(/</g, '&lt;') : ''}</small><div class="actions">${actions(o)}</div></div>`).join('')
+    <small class="muted">${o.fulfillment === 'Pick Up' ? 'Pickup order' : 'Ship to'}: ${escapeHtml(o.name)}, ${escapeHtml(o.addr)} | ${escapeHtml(o.phone)}${o.note ? ' | Note: ' + escapeHtml(o.note) : ''}</small><div class="actions">${actions(o)}</div></div>`).join('')
     || `<div class="card empty">${ICON_BAG}<b>${q ? 'No matching orders' : 'No orders under "' + orderTab + '" yet'}</b><p>${q ? 'Try a different order number or product.' : 'Your orders will show up here.'}</p><button class="btn" data-go="products">Shop Matcha</button></div>`;
-}
-function restockOrder(o) {
-  if (o.stockReturned) return;
-  o.items.forEach(i => { stock[i.id] = (Number(stock[i.id]) || 0) + i.qty; });
-  o.stockReturned = true;
-  saveStock();
 }
 $('#orderSearch').oninput = renderOrders;
 function actions(o) {
   const b = (a, l, c = '') => `<button class="btn small ${c}" data-act="${a}" data-id="${o.id}">${l}</button>`;
-  return ({'To Pay': b('pay', 'Pay Now') + b('cancel', 'Cancel Order', 'danger'),
-    'To Ship': b('cancel', 'Cancel Order', 'danger'),
+  return ({'To Ship': b('cancel', 'Cancel Order', 'danger'),
     'To Receive': b('receive', 'Order Received'),
     'Completed': (o.rated ? '' : b('rate', 'Rate', 'pink')) + b('again', 'Buy Again', 'ghost') + b('ret', 'Request Return/Refund', 'ghost'),
     'Return/Refund': `<span class="muted">${o.refundDecision ? 'Refund request ' + o.refundDecision.toLowerCase() + ' by the seller.' : 'Return requested. Waiting for the seller to review it.'}</span>`,
     'Cancelled': b('again', 'Buy Again', 'ghost')})[o.status] || '';
 }
 $('#orderTabs').onclick = e => { const t = e.target.closest('[data-tab]'); if (t) { orderTab = t.dataset.tab; renderOrders(); } };
-$('#orderList').onclick = e => {
+$('#orderList').onclick = async e => {
   const b = e.target.closest('[data-act]'); if (!b) return; const o = me.orders.find(x => x.id === b.dataset.id), a = b.dataset.act;
-  if (a === 'pay') return openOtp(o);
-  if (a === 'cancel') { if (!confirm('Cancel this order?')) return; o.status = 'Cancelled'; orderTab = 'Cancelled'; restockOrder(o); }
-  if (a === 'receive') { o.status = 'Completed'; orderTab = 'Completed'; toast('Order completed. Please rate your items!'); }
-  if (a === 'ret') { const r = prompt('Reason for return/refund?'); if (!r) return; o.status = 'Return/Refund'; orderTab = 'Return/Refund'; }
-  if (a === 'again') { o.items.forEach(i => { const c = me.cart.find(x => x.id === i.id); c ? c.qty += i.qty : me.cart.push({...i}); }); updateCount(); save(); return go('cart'); }
-  if (a === 'rate') { rateOrder = o; save(); return go('reviews'); }
-  save(); renderOrders();
+  if (a === 'cancel') {
+    if (!confirm('Cancel this order?')) return;
+    const {error} = await supabaseClient.rpc('customer_matcha_order_action', {p_order_id: o.dbId, p_action: 'cancel'});
+    if (error) return toast(error.message);
+    orderTab = 'Cancelled';
+  }
+  if (a === 'receive') {
+    const {error} = await supabaseClient.rpc('customer_matcha_order_action', {p_order_id: o.dbId, p_action: 'received'});
+    if (error) return toast(error.message);
+    orderTab = 'Completed'; toast('Order completed. Please rate your items!');
+  }
+  if (a === 'ret') {
+    const reason = prompt('Reason for return/refund?'); if (!reason) return;
+    const {error} = await supabaseClient.rpc('customer_matcha_order_action', {p_order_id: o.dbId, p_action: 'refund', p_reason: reason});
+    if (error) return toast(error.message);
+    orderTab = 'Return/Refund';
+  }
+  if (a === 'again') { o.items.forEach(i => { const c = me.cart.find(x => x.id === i.id); c ? c.qty += i.qty : me.cart.push({id: i.id, qty: i.qty}); }); updateCount(); save(); return go('cart'); }
+  if (a === 'rate') { rateOrder = o; return go('reviews'); }
+  await renderOrders();
 };
 
 /* ---------- REVIEWS ---------- */
 const allReviews = () => [...userReviews, ...SEED_REVIEWS];
-function renderReviews() {
+async function renderReviews() {
+  const [reviewsResult, countsResult] = await Promise.all([
+    supabaseClient.from('reviews').select('*').order('created_at', {ascending: false}),
+    supabaseClient.rpc('matcha_review_vote_counts')
+  ]);
+  if (reviewsResult.error) return showDatabaseError(reviewsResult.error);
+  if (countsResult.error) return showDatabaseError(countsResult.error);
+  userReviews = reviewsResult.data.map(review => ({
+    id: review.id, name: review.customer_name || 'Customer', pid: review.product_id,
+    stars: review.stars, text: review.review_text, img: review.photo_url,
+    date: new Date(review.created_at).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}),
+    help: Number((countsResult.data || []).find(vote => vote.review_id === review.id)?.vote_count || 0)
+  }));
+  reviewVoteCounts = Object.fromEntries(userReviews.map(review => [review.id, review.help]));
   const opts = rateOrder ? rateOrder.items.map(i => P(i.id)) : PRODUCTS, all = allReviews();
   $('#reviewLoginNote').hidden = !!me;
   $('#reviewForm').querySelectorAll('select, textarea, input, button[type="submit"]').forEach(el => { el.disabled = !me; });
@@ -434,52 +600,91 @@ function renderReviews() {
   $('#rSummary').innerHTML = `<div><span class="big">${avg.toFixed(1)}</span><span class="star">${stars(avg)}</span><small class="muted">${all.length} reviews</small></div>
     <div class="bars">${[5, 4, 3, 2, 1].map(n => { const c = all.filter(r => r.stars === n).length; return `<div><span>${n}★</span><i style="--w:${c / all.length * 100}%"></i><span>${c}</span></div>`; }).join('')}</div>`;
   const list = all.filter(r => rf === 'all' || (rf === 'photo' ? r.img : rf === '3' ? r.stars <= 3 : r.stars === +rf));
-  $('#reviewList').innerHTML = list.map(r => { const n = (r.help || 0) + (helpful[r.id] || 0), on = me ? me.voted.includes(r.id) : false, p = P(r.pid);
-    return `<div class="card rv"><span class="rv-av">${initial(r.name)}</span><div class="rv-main"><div class="rv-top"><b>${r.name}</b><small>${r.date}</small></div>
-    <span class="star">${stars(r.stars)}</span><p><span class="tag">${p ? p.name : 'Product'}</span></p><p>${r.text}</p>
-    <button class="helpful ${on ? 'on' : ''}" data-help="${r.id}">Helpful (${n})</button></div>${r.img ? phImg(r.img, 'PHOTO') : ''}</div>`; }).join('') || '<div class="card empty">No reviews match this filter yet.</div>';
+  $('#reviewList').innerHTML = list.map(r => { const n = r.id.startsWith('s') ? r.help || 0 : reviewVoteCounts[r.id] || 0, on = me ? me.voted.includes(r.id) : false, p = P(r.pid);
+    return `<div class="card rv"><span class="rv-av">${escapeHtml(initial(r.name))}</span><div class="rv-main"><div class="rv-top"><b>${escapeHtml(r.name)}</b><small>${escapeHtml(r.date)}</small></div>
+    <span class="star">${stars(r.stars)}</span><p><span class="tag">${p ? p.name : 'Product'}</span></p><p>${escapeHtml(r.text)}</p>
+    ${r.id.startsWith('s') ? `<span class="helpful">Helpful (${n})</span>` : `<button class="helpful ${on ? 'on' : ''}" data-help="${r.id}">Helpful (${n})</button>`}</div>${r.img ? phImg(r.img, 'PHOTO') : ''}</div>`; }).join('') || '<div class="card empty">No reviews match this filter yet.</div>';
 }
 $('#rFilter').onclick = e => { const c = e.target.closest('[data-rf]'); if (!c) return; rf = c.dataset.rf; $$('#rFilter .chip').forEach(x => x.classList.toggle('active', x === c)); renderReviews(); };
-$('#reviewList').onclick = e => {
+$('#reviewList').onclick = async e => {
   const h = e.target.closest('[data-help]'); if (!h) return; if (!requireLogin()) return; const id = h.dataset.help;
-  if (me.voted.includes(id)) { me.voted = me.voted.filter(x => x !== id); helpful[id] = (helpful[id] || 1) - 1; } else { me.voted.push(id); helpful[id] = (helpful[id] || 0) + 1; }
-  store('ml_helpful', helpful); save(); renderReviews();
+  const {data, error} = await supabaseClient.rpc('toggle_matcha_review_vote', {p_review_id: id});
+  if (error) return toast(error.message);
+  me.voted.includes(id) ? me.voted = me.voted.filter(x => x !== id) : me.voted.push(id);
+  reviewVoteCounts[id] = data; await renderReviews();
 };
 $('#stars').onclick = e => { const s = e.target.closest('[data-s]'); if (s) { rating = +s.dataset.s; renderReviews(); } };
 $('#reviewForm').onsubmit = async e => {
   e.preventDefault(); if (!requireLogin('reviews')) return; if (!rating) return toast('Please choose a star rating');
   const f = $('#rvPhoto').files[0];
-  const img = f ? await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); }) : '';
-  userReviews.unshift({id: 'u' + Date.now(), name: me.name, pid: +$('#rvProduct').value, stars: rating, text: $('#rvText').value.replace(/</g, '&lt;'), img, date: new Date().toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}), help: 0});
-  store('ml_reviews_user', userReviews);
-  if (rateOrder) { rateOrder.rated = true; rateOrder = null; save(); }
-  rating = 0; e.target.reset(); toast('Thanks for your review!'); renderReviews();
+  let photoUrl = '';
+  if (f) {
+    if (!f.type.startsWith('image/')) return toast('Choose an image file.');
+    if (f.size > 5 * 1024 * 1024) return toast('Choose an image no larger than 5 MB.');
+    const path = `${authUser.id}/${crypto.randomUUID()}.${f.name.split('.').pop().toLowerCase()}`;
+    const {data, error} = await supabaseClient.storage.from('matcha-review-photos').upload(path, f, {upsert: false});
+    if (error) return toast(error.message);
+    photoUrl = supabaseClient.storage.from('matcha-review-photos').getPublicUrl(data.path).data.publicUrl;
+  }
+  const {error} = await supabaseClient.rpc('submit_matcha_review', {
+    p_product_id: +$('#rvProduct').value,
+    p_stars: rating,
+    p_review_text: $('#rvText').value,
+    p_photo_url: photoUrl,
+    p_order_id: rateOrder?.dbId || null
+  });
+  if (error) return toast(error.message);
+  rateOrder = null; rating = 0; e.target.reset(); toast('Thanks for your review!'); await renderReviews();
 };
 
 /* ---------- MESSAGE ---------- */
 const clock = () => new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
-function renderChat() {
-  if (!me.msgs.length) me.msgs.push({from: 'them', t: 'Hi! Welcome to Matcha Lavur. How can I help you today?', time: clock()});
+async function renderChat() {
+  const {data, error} = await supabaseClient.from('messages').select('*').eq('customer_id', authUser.id).order('created_at');
+  if (error) return showDatabaseError(error);
+  me.msgs = data.map(message => ({id: message.id, from: message.sender_role === 'customer' ? 'me' : 'them', t: message.message, time: new Date(message.created_at).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'})}));
   const d = new Date(), open = d.getDay() !== 0 && d.getHours() >= 9 && d.getHours() < 18;
   $('#sellerStatus').textContent = open ? 'Online now' : 'Away. Replies when the store opens';
-  $('#chatBody').innerHTML = '<span class="dsep">Today</span>' + me.msgs.map(m => `<div class="msg ${m.from === 'me' ? 'me' : 'them'}">${escapeHtml(m.t)}<small>${escapeHtml(m.time || '')}</small></div>`).join('');
+  $('#chatBody').innerHTML = (me.msgs.length ? '<span class="dsep">Today</span>' : '<p class="muted center">Send a message to the owner.</p>') + me.msgs.map(m => `<div class="msg ${m.from === 'me' ? 'me' : 'them'}">${escapeHtml(m.t)}<small>${escapeHtml(m.time || '')}</small></div>`).join('');
   $('#chatBody').scrollTop = 1e6;
 }
-function send(t) {
-  if (!t.trim()) return; me.msgs.push({from: 'me', t: t.trim(), time: clock()}); save(); renderChat();
+async function send(t) {
+  if (!t.trim()) return;
+  const {error} = await supabaseClient.from('messages').insert({customer_id: authUser.id, sender_role: 'customer', message: t.trim()});
+  if (error) return toast(error.message);
+  await renderChat();
 }
-$('#chatForm').onsubmit = e => { e.preventDefault(); send($('#chatInput').value); $('#chatInput').value = ''; };
+$('#chatForm').onsubmit = async e => { e.preventDefault(); await send($('#chatInput').value); $('#chatInput').value = ''; };
 $('#quick').onclick = e => { if (e.target.tagName === 'BUTTON') send(e.target.textContent); };
-$('#clearChat').onclick = () => { if (confirm('Clear this conversation?')) { me.msgs = []; save(); renderChat(); } };
+$('#clearChat').onclick = async () => {
+  if (!confirm('Clear this conversation?')) return;
+  const {error} = await supabaseClient.from('messages').delete().eq('customer_id', authUser.id);
+  if (error) return toast(error.message);
+  await renderChat();
+};
 $('#shareOrder').onclick = () => { if (!me.orders.length) return toast('You have no orders to share yet'); $('#chatInput').value = 'Hi! I have a question about order #' + me.orders[0].id + '.'; $('#chatInput').focus(); };
 
 /* ---------- OWNER ADMIN ---------- */
-function renderAdmin() {
+async function renderAdmin() {
   if (!isAdmin) return;
-  const allOrders = Object.entries(users).flatMap(([email, user]) => (user.orders || []).map(order => ({email, user, order})));
-  const salesOrders = allOrders.filter(({order}) => !['To Pay', 'Cancelled', 'Return/Refund'].includes(order.status));
+  const [ordersResult, stockResult, profilesResult] = await Promise.all([
+    supabaseClient.from('orders').select('*,order_items(*)').order('created_at', {ascending: false}),
+    supabaseClient.from('products').select('id,stock'),
+    supabaseClient.from('profiles').select('id,email,full_name').neq('id', authUser.id)
+  ]);
+  for (const result of [ordersResult, stockResult, profilesResult]) if (result.error) return showDatabaseError(result.error);
+
+  ownerCustomers = profilesResult.data;
+  stock = Object.fromEntries(stockResult.data.map(product => [product.id, product.stock]));
+  const customerById = Object.fromEntries(ownerCustomers.map(customer => [customer.id, customer]));
+  const allOrders = ordersResult.data.map(order => ({
+    email: order.customer_email,
+    user: customerById[order.customer_id] || {full_name: order.customer_name},
+    order: mapDatabaseOrder(order)
+  }));
+  const salesOrders = allOrders.filter(({order}) => !['Cancelled', 'Return/Refund'].includes(order.status));
   const salesTotal = salesOrders.reduce((sum, {order}) => sum + Number(order.total || 0), 0);
-  const pending = allOrders.filter(({order}) => ['To Pay', 'To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive'].includes(order.status)).length;
+  const pending = allOrders.filter(({order}) => ['To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive'].includes(order.status)).length;
   const refunds = allOrders.filter(({order}) => order.status === 'Return/Refund' && !order.refundDecision).length;
   const productSales = new Map();
   salesOrders.forEach(({order}) => order.items.forEach(item => {
@@ -487,103 +692,111 @@ function renderAdmin() {
     if (!product) return;
     const current = productSales.get(item.id) || {name: product.name, quantity: 0, revenue: 0};
     current.quantity += Number(item.qty || 0);
-    current.revenue += product.price * Number(item.qty || 0);
+    current.revenue += Number(item.price || product.price) * Number(item.qty || 0);
     productSales.set(item.id, current);
   }));
   const bestSellers = [...productSales.values()].sort((a, b) => b.revenue - a.revenue);
   $('#ownerName').textContent = me.name;
   $('#ownerEmail').textContent = session;
   setAv($('#ownerAvatar'), me.name, me.profile.photo);
-  $('#ownerStats').innerHTML = `<div class="stat"><small>Sales from paid / processing orders</small><b>${peso(salesTotal)}</b></div>
+  $('#ownerStats').innerHTML = `<div class="stat"><small>Order value (excluding cancelled/refunded)</small><b>${peso(salesTotal)}</b></div>
     <div class="stat"><small>Total orders</small><b>${allOrders.length}</b></div>
     <div class="stat"><small>Active orders</small><b>${pending}</b></div>
     <div class="stat"><small>Refunds to review</small><b>${refunds}</b></div>`;
   $('#ownerSales').innerHTML = bestSellers.length ? bestSellers.map(item => `<div class="sales-row"><span>${escapeHtml(item.name)} <small class="muted">(${item.quantity} sold)</small></span><b>${peso(item.revenue)}</b></div>`).join('') : '<p class="muted">Sales will appear here after customers place orders.</p>';
   $('#adminOrders').innerHTML = allOrders.length ? allOrders.map(({email, user, order}) => `
     <div class="card order">
-      <div class="order-h"><b>Order #${escapeHtml(order.id)} · ${escapeHtml(user.name)}</b><span>${escapeHtml(email)}</span><span class="status">${escapeHtml(order.status)}</span></div>
+      <div class="order-h"><b>Order #${escapeHtml(order.id)} · ${escapeHtml(user.full_name)}</b><span>${escapeHtml(email)}</span><span class="status">${escapeHtml(order.status)}</span></div>
       <p class="muted">${order.items.map(i => `${escapeHtml(P(i.id).name)} × ${i.qty}`).join(', ')} | ${peso(order.total)}</p>
       <p class="muted">${escapeHtml(order.delivery || '')} ${escapeHtml(order.fulfillment || '')} | ${escapeHtml(order.addr || '')}</p>
       <div class="actions">
-        <select data-admin-status="${escapeHtml(order.id)}" data-owner="${escapeHtml(email)}">${['To Pay', 'To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive', 'Completed', 'Return/Refund', 'Cancelled'].map(s => `<option ${order.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
-        <button class="btn small" data-admin-update="${escapeHtml(order.id)}" data-owner="${escapeHtml(email)}">Update Order</button>
-        ${order.status === 'Return/Refund' && !order.refundDecision ? `<button class="btn small" data-refund="Approved" data-admin-id="${escapeHtml(order.id)}" data-owner="${escapeHtml(email)}">Approve Refund</button><button class="btn small danger" data-refund="Declined" data-admin-id="${escapeHtml(order.id)}" data-owner="${escapeHtml(email)}">Decline Refund</button>` : ''}
+        <select data-admin-status="${escapeHtml(order.id)}">${['To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive', 'Completed', 'Return/Refund', 'Cancelled'].map(s => `<option ${order.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+        <button class="btn small" data-admin-update="${escapeHtml(order.id)}" data-db-id="${order.dbId}">Update Order</button>
+        ${order.status === 'Return/Refund' && !order.refundDecision ? `<button class="btn small" data-refund="Approved" data-db-id="${order.dbId}">Approve Refund</button><button class="btn small danger" data-refund="Declined" data-db-id="${order.dbId}">Decline Refund</button>` : ''}
         ${order.refundDecision ? `<span class="muted">Refund ${escapeHtml(order.refundDecision.toLowerCase())}</span>` : ''}
       </div>
     </div>`).join('') : '<div class="card empty">No orders yet.</div>';
   $('#adminStock').innerHTML = PRODUCTS.map(p => `<div class="stock-row"><b>${escapeHtml(p.name)}</b><input type="number" min="0" step="1" value="${Math.max(0, Number(stock[p.id]) || 0)}" data-stock="${p.id}" aria-label="Available stock for ${escapeHtml(p.name)}"><button class="btn small" data-stock-save="${p.id}">Save</button></div>`).join('');
-  const emails = Object.keys(users).filter(email => email !== OWNER_EMAIL);
-  if (!emails.includes(adminCustomer)) adminCustomer = emails[0] || '';
-  $('#adminCustomer').innerHTML = emails.map(email => `<option value="${escapeHtml(email)}" ${email === adminCustomer ? 'selected' : ''}>${escapeHtml(users[email].name)} (${escapeHtml(email)})</option>`).join('');
-  $('#adminCustomer').disabled = !emails.length;
+  if (!ownerCustomers.some(customer => customer.id === adminCustomer)) adminCustomer = ownerCustomers[0]?.id || '';
+  $('#adminCustomer').innerHTML = ownerCustomers.map(customer => `<option value="${customer.id}" ${customer.id === adminCustomer ? 'selected' : ''}>${escapeHtml(customer.full_name)} (${escapeHtml(customer.email)})</option>`).join('');
+  $('#adminCustomer').disabled = !ownerCustomers.length;
   renderAdminChat();
 }
 $('#ownerEditProfile').onclick = () => $('#profileBtn').click();
-window.addEventListener('storage', e => {
-  if (e.key === 'ml_users') {
-    users = load('ml_users', {});
-    if (isAdmin && $('[data-page="admin"]:not([hidden])')) renderAdmin();
-  }
-  if (e.key === 'ml_stock') {
-    stock = {...Object.fromEntries(PRODUCTS.map(p => [p.id, 20])), ...load('ml_stock', {})};
-    if (isAdmin && $('[data-page="admin"]:not([hidden])')) renderAdmin();
-  }
-});
-function renderAdminChat() {
-  const customer = users[adminCustomer];
-  if (!customer) return $('#adminChatBody').innerHTML = '<p class="muted">No customer accounts yet.</p>';
-  const msgs = customer.msgs || [];
-  $('#adminChatBody').innerHTML = msgs.map(m => `<div class="msg ${m.from === 'me' ? 'them' : 'me'}">${escapeHtml(m.t)}<small>${escapeHtml(m.time || '')}</small></div>`).join('') || '<p class="muted">No messages from this customer yet.</p>';
+async function renderAdminChat() {
+  if (!adminCustomer) return $('#adminChatBody').innerHTML = '<p class="muted">No customer accounts yet.</p>';
+  const {data, error} = await supabaseClient.from('messages').select('*').eq('customer_id', adminCustomer).order('created_at');
+  if (error) return showDatabaseError(error);
+  $('#adminChatBody').innerHTML = data.map(message => `<div class="msg ${message.sender_role === 'owner' ? 'me' : 'them'}">${escapeHtml(message.message)}<small>${new Date(message.created_at).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'})}</small></div>`).join('') || '<p class="muted">No messages from this customer yet.</p>';
   $('#adminChatBody').scrollTop = 1e6;
 }
 $('#adminCustomer').onchange = e => { adminCustomer = e.target.value; renderAdminChat(); };
-$('#adminChatForm').onsubmit = e => {
+$('#adminChatForm').onsubmit = async e => {
   e.preventDefault();
-  if (!isAdmin || !users[adminCustomer]) return;
+  if (!isAdmin || !adminCustomer) return;
   const text = $('#adminChatInput').value.trim();
   if (!text) return;
-  users[adminCustomer].msgs = users[adminCustomer].msgs || [];
-  users[adminCustomer].msgs.push({from: 'them', t: text, time: clock()});
+  const {error} = await supabaseClient.from('messages').insert({customer_id: adminCustomer, sender_role: 'owner', message: text});
+  if (error) return toast(error.message);
   $('#adminChatInput').value = '';
-  save(); renderAdminChat();
+  renderAdminChat();
 };
-$('#adminStock').onclick = e => {
+$('#adminStock').onclick = async e => {
   const button = e.target.closest('[data-stock-save]'); if (!button || !isAdmin) return;
   const input = $(`[data-stock="${button.dataset.stockSave}"]`), quantity = Number(input.value);
   if (!Number.isInteger(quantity) || quantity < 0) return toast('Enter a valid non-negative stock quantity.');
-  stock[button.dataset.stockSave] = quantity; saveStock(); renderAdmin();
+  const {error} = await supabaseClient.from('products').update({stock: quantity}).eq('id', button.dataset.stockSave);
+  if (error) return toast(error.message);
+  stock[button.dataset.stockSave] = quantity; renderAdmin();
   toast('Stock updated.');
 };
-$('#adminOrders').onclick = e => {
+$('#adminOrders').onclick = async e => {
   if (!isAdmin) return;
   const update = e.target.closest('[data-admin-update]');
   const refund = e.target.closest('[data-refund]');
-  const orderId = update ? update.dataset.adminUpdate : refund && refund.dataset.adminId;
-  const email = update ? update.dataset.owner : refund && refund.dataset.owner;
-  const order = email && (users[email].orders || []).find(o => o.id === orderId);
-  if (!order) return;
+  const orderId = update?.dataset.dbId || refund?.dataset.dbId;
+  if (!orderId) return;
+  let result;
   if (refund) {
-    order.refundDecision = refund.dataset.refund;
-    if (refund.dataset.refund === 'Approved') restockOrder(order);
+    result = await supabaseClient.from('orders').update({refund_decision: refund.dataset.refund}).eq('id', orderId);
   } else {
-    const statusControl = [...$('#adminOrders').querySelectorAll('[data-admin-status]')].find(el => el.dataset.adminStatus === orderId && el.dataset.owner === email);
+    const statusControl = [...$('#adminOrders').querySelectorAll('[data-admin-status]')].find(el => el.dataset.adminStatus === update.dataset.adminUpdate);
     if (!statusControl) return;
-    const status = statusControl.value;
-    if (status === 'Cancelled') restockOrder(order);
-    order.status = status;
+    result = await supabaseClient.from('orders').update({status: statusControl.value}).eq('id', orderId);
   }
-  save(); renderAdmin();
+  if (result.error) return toast(result.error.message);
+  await renderAdmin();
   toast(refund ? `Refund ${refund.dataset.refund.toLowerCase()}.` : 'Order updated.');
 };
 
 /* ---------- SUPPORT ---------- */
 function renderFaq() { $('#faq').innerHTML = FAQ.map(f => `<div class="faq-i"><button>${f[0]}</button><p hidden>${f[1]}</p></div>`).join(''); }
 $('#faq').onclick = e => { const b = e.target.closest('button'); if (b) b.nextElementSibling.hidden = !b.nextElementSibling.hidden; };
-$('#csForm').onsubmit = e => { e.preventDefault(); $('#csDone').textContent = 'Ticket #' + Math.floor(Math.random() * 90000 + 10000) + ' submitted. We will email you soon.'; $('#csMsg').value = ''; };
+$('#csForm').onsubmit = async e => {
+  e.preventDefault();
+  if (!requireLogin('support')) return;
+  const message = `Support: ${$('#csTopic').value}\n${$('#csMsg').value.trim()}`;
+  const {error} = await supabaseClient.from('messages').insert({customer_id: authUser.id, sender_role: 'customer', message});
+  if (error) return toast(error.message);
+  $('#csDone').textContent = 'Your message was sent to the owner. You can continue the conversation in Message the Seller.';
+  $('#csMsg').value = '';
+};
 
 /* ---------- INIT ---------- */
 $$('img').forEach(i => { if (i.complete && !i.naturalWidth) i.remove(); });
-if (session && users[session]) startSession(session); else startGuest();
+(async function initialize() {
+  try {
+    await loadStock();
+    const {data, error} = await supabaseClient.auth.getSession();
+    if (error) throw error;
+    if (data.session?.user) await startSession(data.session.user);
+    else startGuest();
+    if (data.session?.user && !me) await startGuest();
+  } catch (error) {
+    startGuest();
+    showDatabaseError(error);
+  }
+})();
 /* ---------- VIEW FULL PRODUCT PICTURE ---------- */
 document.addEventListener('click', e => {
   const v = e.target.closest('[data-view]');
