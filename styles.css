@@ -49,6 +49,10 @@ nav button:hover,nav button.active{background:#ffffff33}
 .badge{background:var(--pink);color:#fff;font-style:normal;font-size:.72rem;padding:1px 7px;border-radius:999px;margin-left:3px;display:inline-block}
 .badge.bump{animation:bump .45s}@keyframes bump{40%{transform:scale(1.7)}}
 .user{display:flex;align-items:center;gap:8px;color:#fff;font-size:.9rem;white-space:nowrap}
+.live-status{color:#fff;font-size:.76rem;font-weight:700;white-space:nowrap}
+.live-status::before{content:"";display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%;background:#ffe27a}
+.live-status.is-live::before{background:#c9ffd3}
+.live-status.is-error::before{background:#ffb0aa}
 .profile-btn{display:flex;align-items:center;gap:8px;background:#ffffff26;color:#fff;padding:4px 12px 4px 4px;border-radius:999px;font-weight:600}.profile-btn:hover{background:#ffffff40}
 .av{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#fff center/cover no-repeat;color:var(--g);font-weight:800;flex:none}.av.big{width:84px;height:84px;font-size:2rem}
 main{max-width:1200px;margin:auto;padding:0 16px 40px;min-height:70vh}

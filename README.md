@@ -4,11 +4,12 @@ A browser-based storefront for Matcha Lavur drinks, sweets, powders, and merchan
 
 ## Supabase setup
 
-1. In the Supabase project SQL Editor, run [`supabase/schema.sql`](./supabase/schema.sql) once. It creates the tables, row-level security policies, storage buckets, order/review functions, and realtime configuration.
-2. In **Authentication → URL Configuration**, set the deployed Vercel site URL and add each allowed site URL as a redirect URL. For local testing, use `http://localhost:8000`.
-3. Keep email confirmation enabled for customer accounts. Configure Google/Facebook providers in Supabase only if those sign-in buttons are needed.
-4. Create the owner account from the website using `matchalavur@gmail.com`, then confirm the email. The owner dashboard and database-level owner permissions are based on that authenticated email; the password is managed in Supabase Auth and is not stored in this repository.
-5. Deploy the site on Vercel. When the connected GitHub branch is updated, Vercel can deploy the new version.
+1. In the Supabase project SQL Editor, run [`supabase/schema.sql`](./supabase/schema.sql) once. It creates the tables, row-level security policies, storage buckets, order/review functions, and core realtime configuration.
+2. Run [`supabase/realtime.sql`](./supabase/realtime.sql) after the schema. This safely adds cart, wishlist, and review-vote changes to Supabase Realtime.
+3. In **Authentication → URL Configuration**, set the deployed Vercel site URL and add each allowed site URL as a redirect URL. For local testing, use `http://localhost:8000`.
+4. Keep email confirmation enabled for customer accounts. Configure Google/Facebook providers in Supabase only if those sign-in buttons are needed.
+5. Create the owner account from the website using `matchalavur@gmail.com`, then confirm the email. The owner dashboard and database-level owner permissions are based on that authenticated email; the password is managed in Supabase Auth and is not stored in this repository.
+6. Deploy the site on Vercel. When the connected GitHub branch is updated, Vercel can deploy the new version.
 
 `supabase-config.js` contains the Supabase project URL and browser-safe publishable key. These are intended for the frontend; never put a Supabase service-role key in the site.
 

@@ -116,6 +116,156 @@ async function loadStock() {
   if (error) throw error;
   stock = Object.fromEntries(data.map(product => [product.id, product.stock]));
 }
+const visiblePage = () => $('[data-page]:not([hidden])')?.dataset.page || 'home';
+function setRealtimeStatus(status) {
+  const badge = $('#liveStatus');
+  badge.classList.toggle('is-live', status === 'live');
+  badge.classList.toggle('is-error', status === 'error');
+  badge.textContent = status === 'live' ? 'Live database'
+    : status === 'error' ? 'Live updates unavailable'
+      : 'Connecting to database';
+}
+async function refreshRealtimeState(userId) {
+  await loadStock();
+  if (userId) {
+    const results = await Promise.all([
+      supabaseClient.from('profiles').select('*').eq('id', userId).single(),
+      supabaseClient.from('cart_items').select('product_id,quantity').eq('customer_id', userId),
+      supabaseClient.from('wishlist_items').select('product_id').eq('customer_id', userId),
+      supabaseClient.from('orders').select('*,order_items(*)').order('created_at', {ascending: false}),
+      supabaseClient.from('messages').select('*').eq('customer_id', userId).order('created_at'),
+      supabaseClient.from('review_votes').select('review_id').eq('customer_id', userId)
+    ]);
+    for (const result of results) if (result.error) throw result.error;
+    if (authUser?.id !== userId) return;
+    const [profile, cart, wishlist, orders, messages, votes] = results.map(result => result.data);
+    me.name = profile.full_name || authUser.user_metadata?.full_name || authUser.email;
+    me.profile = {photo: profile.photo_url || '', phone: profile.phone || '', addr: profile.address || '', bio: profile.bio || ''};
+    me.cart = cart.map(item => ({id: item.product_id, qty: item.quantity}));
+    me.wish = wishlist.map(item => item.product_id);
+    me.orders = orders.filter(order => order.customer_id === userId).map(mapDatabaseOrder);
+    me.msgs = messages.map(message => ({
+      id: message.id,
+      from: message.sender_role === 'customer' ? 'me' : 'them',
+      t: message.message,
+      time: new Date(message.created_at).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'})
+    }));
+    me.voted = votes.map(vote => vote.review_id);
+    if (isAdmin) {
+      const {data, error} = await supabaseClient.from('profiles').select('id,email,full_name').neq('id', userId);
+      if (error) throw error;
+      ownerCustomers = data;
+    }
+    renderHeader();
+    updateCount();
+  }
+  const page = visiblePage();
+  if (page === 'products') renderProducts();
+  if (page === 'reviews') await renderReviews();
+  if (page === 'cart') renderCart();
+  if (page === 'checkout') renderCheckout();
+  if (page === 'mypurchase') await renderOrders();
+  if (page === 'message' && userId) await renderChat();
+  if (page === 'admin' && isAdmin) await renderAdmin();
+}
+async function subscribeToStoreChanges(user) {
+  if (realtimeChannel) await supabaseClient.removeChannel(realtimeChannel);
+  setRealtimeStatus('connecting');
+  const channel = supabaseClient.channel('matcha-store-' + (user?.id || 'public'))
+    .on('postgres_changes', {event: '*', schema: 'public', table: 'products'}, async () => {
+      try {
+        await loadStock();
+        const page = visiblePage();
+        if (page === 'products') renderProducts();
+        if (page === 'cart') renderCart();
+        if (page === 'checkout') renderCheckout();
+        if (page === 'admin' && isAdmin) await renderAdmin();
+      } catch (error) { showDatabaseError(error); }
+    })
+    .on('postgres_changes', {event: '*', schema: 'public', table: 'reviews'}, () => {
+      if (visiblePage() === 'reviews') renderReviews();
+    });
+  if (user) {
+    channel
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'orders'}, async () => {
+        try {
+          if (isAdmin && visiblePage() === 'admin') await renderAdmin();
+          if (!isAdmin && authUser?.id === user.id) {
+            const {data, error} = await supabaseClient.from('orders').select('*,order_items(*)')
+              .eq('customer_id', user.id).order('created_at', {ascending: false});
+            if (error) throw error;
+            me.orders = data.map(mapDatabaseOrder);
+            if (visiblePage() === 'mypurchase') await renderOrders();
+          }
+        } catch (error) { showDatabaseError(error); }
+      })
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'profiles'}, async () => {
+        try {
+          if (isAdmin && visiblePage() === 'admin') await renderAdmin();
+          if (authUser?.id === user.id) {
+            const {data, error} = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+            if (error) throw error;
+            me.name = data.full_name || user.email;
+            me.profile = {photo: data.photo_url || '', phone: data.phone || '', addr: data.address || '', bio: data.bio || ''};
+            renderHeader();
+            if (visiblePage() === 'admin' && isAdmin) await renderAdmin();
+          }
+        } catch (error) { showDatabaseError(error); }
+      })
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'messages'}, async event => {
+        try {
+          if (authUser?.id === user.id && !isAdmin && visiblePage() === 'message') await renderChat();
+          if (isAdmin && visiblePage() === 'admin') {
+            const customerId = event.new?.customer_id || event.old?.customer_id;
+            if (customerId && !ownerCustomers.some(customer => customer.id === customerId)) {
+              await renderAdmin();
+            } else if (!customerId || customerId === adminCustomer) {
+              await renderAdminChat();
+            }
+          }
+        } catch (error) { showDatabaseError(error); }
+      })
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'cart_items'}, async () => {
+        try {
+          if (authUser?.id !== user.id) return;
+          const {data, error} = await supabaseClient.from('cart_items').select('product_id,quantity').eq('customer_id', user.id);
+          if (error) throw error;
+          me.cart = data.map(item => ({id: item.product_id, qty: item.quantity}));
+          updateCount();
+          if (visiblePage() === 'cart') renderCart();
+          if (visiblePage() === 'checkout') renderCheckout();
+        } catch (error) { showDatabaseError(error); }
+      })
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'wishlist_items'}, async () => {
+        try {
+          if (authUser?.id !== user.id) return;
+          const {data, error} = await supabaseClient.from('wishlist_items').select('product_id').eq('customer_id', user.id);
+          if (error) throw error;
+          me.wish = data.map(item => item.product_id);
+          if (visiblePage() === 'products') renderProducts();
+        } catch (error) { showDatabaseError(error); }
+      })
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'review_votes'}, async () => {
+        try {
+          if (authUser?.id !== user.id) return;
+          const {data, error} = await supabaseClient.from('review_votes').select('review_id').eq('customer_id', user.id);
+          if (error) throw error;
+          me.voted = data.map(vote => vote.review_id);
+          if (visiblePage() === 'reviews') await renderReviews();
+        } catch (error) { showDatabaseError(error); }
+      });
+  }
+  realtimeChannel = channel.subscribe(async status => {
+    if (realtimeChannel !== channel) return;
+    if (status === 'SUBSCRIBED') {
+      setRealtimeStatus('live');
+      try { await refreshRealtimeState(user?.id); } catch (error) { showDatabaseError(error); }
+    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+      setRealtimeStatus('error');
+      console.error('Supabase realtime connection status:', status);
+    }
+  });
+}
 let toastT;
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 3000); }
 document.addEventListener('error', e => { if (e.target.tagName === 'IMG') e.target.remove(); }, true);
@@ -190,26 +340,7 @@ async function startSession(user) {
       if (error) throw error;
       ownerCustomers = data;
     }
-    if (realtimeChannel) await supabaseClient.removeChannel(realtimeChannel);
-    realtimeChannel = supabaseClient.channel('matcha-store-' + user.id)
-      .on('postgres_changes', {event: '*', schema: 'public', table: 'orders'}, () => {
-        if ($('[data-page="admin"]:not([hidden])')) renderAdmin();
-        if ($('[data-page="mypurchase"]:not([hidden])')) renderOrders();
-      })
-      .on('postgres_changes', {event: '*', schema: 'public', table: 'profiles'}, () => {
-        if (isAdmin && $('[data-page="admin"]:not([hidden])')) renderAdmin();
-      })
-      .on('postgres_changes', {event: '*', schema: 'public', table: 'products'}, async () => {
-        try { await loadStock(); renderProducts(); } catch (error) { showDatabaseError(error); }
-      })
-      .on('postgres_changes', {event: '*', schema: 'public', table: 'messages'}, () => {
-        if ($('[data-page="message"]:not([hidden])')) renderChat();
-        if (isAdmin && $('[data-page="admin"]:not([hidden])')) renderAdminChat();
-      })
-      .on('postgres_changes', {event: '*', schema: 'public', table: 'reviews'}, () => {
-        if ($('[data-page="reviews"]:not([hidden])')) renderReviews();
-      })
-      .subscribe();
+    await subscribeToStoreChanges(user);
     toast(isAdmin ? 'Welcome, owner!' : 'Welcome to Matcha Lavur!');
   } catch (error) {
     showDatabaseError(error);
@@ -226,6 +357,7 @@ async function startGuest(signOut = false) {
     if (error) return showDatabaseError(error);
   }
   me = null; authUser = null; isAdmin = false; session = null;
+  await subscribeToStoreChanges(null);
   $('#auth').hidden = true; $('#app').hidden = false;
   $('#loginLink').hidden = false; $('#profileBtn').hidden = true; $('#logout').hidden = true; $('#adminNav').hidden = true;
   go('home');
