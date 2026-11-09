@@ -53,7 +53,7 @@ const DISCOUNTS = [
   {code:'MATCHA20', label:'20% off', type:'pct', val:20, min:1000}
 ];
 const SHIP = {std: 49, exp: 99};
-const OWNER_EMAIL = 'matchalavur@gmail.com';
+const OWNER_USER_ID = '5c838b4c-867d-4a53-8fa7-bb0ee2c72106';
 const FAQ = [
   ['How do I place an order?', 'Add items to your cart, open Purchase, fill in your details, choose delivery or pickup, and press Place Order.'],
   ['What payment methods are accepted?', 'Cash on Delivery or cash on pickup. Online payments are not currently available.'],
@@ -325,7 +325,7 @@ async function loadAccountData(user) {
   };
   session = user.email;
   authUser = user;
-  isAdmin = user.email?.toLowerCase() === OWNER_EMAIL;
+  isAdmin = user.id === OWNER_USER_ID;
   $('#auth').hidden = true; $('#app').hidden = false; $('#loginLink').hidden = true;
   $('#profileBtn').hidden = false; $('#logout').hidden = false; $('#adminNav').hidden = !isAdmin;
   $('#coName').value = me.name; $('#coEmail').value = user.email; $('#coPhone').value = me.profile.phone; $('#coAddr').value = me.profile.addr;
