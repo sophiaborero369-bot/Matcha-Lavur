@@ -1,10 +1,10 @@
-const $ = selector => document.querySelector(selector);
-const $$ = selector => [...document.querySelectorAll(selector)];
-const peso = amount => '₱' + Number(amount).toLocaleString('en-PH', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
-});
+/* ===== MATCHA LAVUR - script.js ===== */
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const peso = n => '₱' + Number(n).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
+/* ---------- DATA (edit names, prices, images here) ---------- */
 const PRODUCTS = [
   {id:1,name:'Blueberry Matcha Spring Latte',cat:'Drinks',price:180,rate:4.9,img:'Blueberry_Matcha Spring Latte.jfif',desc:'Fresh blueberries blended with creamy milk and layered with iced ceremonial matcha.'},
   {id:2,name:'Dirty Matcha Latte',cat:'Drinks',price:175,rate:4.7,img:'dirty matcha latte.jpg',desc:'Rich espresso layered with fresh milk and ceremonial matcha over ice.'},
@@ -36,149 +36,566 @@ const PRODUCTS = [
   {id:28,name:'Fukujuen Ceremonial Matcha (Pack of 10 sticks)',cat:'Powder',price:2050,rate:4.9,img:'4902405138202_02.jpg',desc:'Double-walled stainless steel tumbler with a ceramic interior, keeping your matcha drinks hot or cold for hours.'},
   {id:29,name:'AquaFlask AquaSip (32oz)',cat:'Merchandise',price:1390,rate:4.8,img:'aquaflask-7388-3478044-1.webp',desc:'32oz double-wall vacuum-insulated stainless steel water bottle in monochromatic Matcha green, keeping drinks cold for up to 24 hours or hot for up to 12 hours.'},
   {id:30,name:'7-Piece Ceramic Matcha Tea Ceremony Gift Set',cat:'Merchandise',price:1800,rate:4.8,img:'matcha tea set.webp',desc:'Authentic Japanese tea ceremony kit featuring a hand-glazed ceramic bowl, bamboo whisk and scoop, sifter, and tea towel.'},
-  {id:31,name:'Ceramic Matcha Mug',cat:'Merchandise',price:1800,rate:4.8,img:'mug.webp',desc:'A beautiful ceramic mug perfect for enjoying your favorite matcha preparation.'}
+  {id:31,name:'2 Ceramic Matcha Mug',cat:'Merchandise',price:1200,rate:4.8,img:'mug.webp',desc:'A beautiful ceramic mug perfect for enjoying your favorite matcha preparation.'},
+  {id:32,name:'Matcha Roll Cow Plush (Sheepydust)',cat:'Merchandise',price:2600,rate:4.9,img:'toy.webp',desc:'Fluffy pastel-green Highland cow plush wearing a leafy headband topped with a mini matcha roll cake slice, complete with an embroidered pink butterfly and a green ribbon tied with a brass bell.'},
+  {id:33,name:'Monchhichi Keychain',cat:'Merchandise',price:850,rate:5.0,img:'monchhichi keychain matcha.webp',desc:'Vibrant matcha green Monchhichi plush keychain featuring tea-leaf hair details, twin tails, soft green fur, and a classic bib with a tea cup illustration.'},
+  {id:34,name:'Matcha Green Ring-Handle Folding Umbrella with Retractable Drip Sleeve',cat:'Merchandise',price:680,rate:4.9,img:'umbrella.webp',desc:'3-fold compact umbrella featuring a textured floral-embossed matcha green canopy, an ergonomic carabiner ring handle, and a built-in telescopic drip cover that slides over the folded umbrella to keep your bag and car dry.'},
+  {id:35,name:'"But First, Matcha" Canvas Tote Bag',cat:'Merchandise',price:480,rate:4.7,img:'tote bag.jpeg',desc:'Eco-friendly off-white cotton canvas tote bag featuring an adorable smiling matcha cup graphic and bold "BUT FIRST Matcha" typography.'}
+
+
+
 ];
+const VOUCHERS = [
+  {code:'LAVUR50', label:'P50 off', type:'amt', val:50, min:300},
+  {code:'WELCOME100', label:'P100 off', type:'amt', val:100, min:500},
+  {code:'FREESHIP', label:'Free shipping', type:'ship', val:0, min:200}
+];
+const DISCOUNTS = [
+  {code:'NEWOPEN10', label:'10% off (New Opening)', type:'pct', val:10, min:0},
+  {code:'GRANDOPEN15', label:'15% off', type:'pct', val:15, min:600},
+  {code:'MATCHA20', label:'20% off', type:'pct', val:20, min:1000}
+];
+const SHIP = {std: 49, exp: 99};
+const OWNER_EMAIL = 'matchalavur@gmail.com';
+const FAQ = [
+  ['How do I place an order?', 'Add items to your cart, open Purchase, fill in your details, choose a payment method and press Place Order.'],
+  ['What payment methods are accepted?', 'Cash on Delivery, e-wallets (GCash, Maya and PayPal) and online banking (UnionBank, BDO, BPI and more).'],
+  ['How do vouchers and discounts work?', 'On the Purchase page choose either a voucher or a discount. Only one can be used per order and each has a minimum spend.'],
+  ['Can I cancel my order?', 'Yes, while it is in To Pay or To Ship. Go to My Purchase and press Cancel Order.'],
+  ['How do I return or refund an item?', 'After an order is Completed, open My Purchase > Completed and press Request Return/Refund.'],
+  ['How long does delivery take?', 'In Davao City, drinks and sweets arrive in minutes. Powder and merchandise deliver in 2 to 4 days. Outside Davao City, only powder and merchandise can be ordered and delivery takes 2 to 4 days. Pickup is also available.']
+];
+const SEED_REVIEWS = [
+  {id:'s1', name:'Angela R.', pid:3, stars:5, text:'The strawberry matcha is perfect. Not too sweet and the matcha is rich!', img:'images/review1.jpg', date:'Nov 2, 2026', help:12},
+  {id:'s2', name:'Marco D.', pid:12, stars:5, text:'Best matcha basque cheesecake I have tried. Arrived cold and intact.', img:'images/review2.jpg', date:'Nov 1, 2026', help:9},
+  {id:'s3', name:'Kyla S.', pid:9, stars:4, text:'Mochi was so soft. Would love more flavors next time.', img:'images/review3.jpg', date:'Oct 30, 2026', help:4},
+  {id:'s4', name:'Paolo T.', pid:1, stars:5, text:'My daily iced latte now. Smooth and not bitter at all.', img:'', date:'Oct 28, 2026', help:6},
+  {id:'s5', name:'Jen L.', pid:6, stars:3, text:'Tasty frappe but it melted a bit on the way. Still good.', img:'', date:'Oct 27, 2026', help:2}
+];
+const P = id => PRODUCTS.find(p => p.id === id);
+const phImg = (src, label) => `<div class="ph"><img src="${src}" alt=""><span>${label}<br>${src}</span></div>`;
+const ICON_BAG = '<div class="empty-ic"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8a3 3 0 016 0"/></svg></div>';
 
-const cart = new Map();
-let category = 'all';
-let toastTimer;
+/* ---------- STATE ---------- */
+let users = load('ml_users', {}), session = load('ml_session', null), me = null, isAdmin = false;
+let stock = {...Object.fromEntries(PRODUCTS.map(p => [p.id, 20])), ...load('ml_stock', {})};
+let userReviews = load('ml_reviews_user', []), helpful = load('ml_helpful', {});
+let cat = 'all', rating = 0, orderTab = 'To Pay', rateOrder = null, rf = 'all', pfPhoto = null, otpOrder = null, adminCustomer = '', pendingPage = 'home';
+const save = () => store('ml_users', users);
+const saveStock = () => store('ml_stock', stock);
+let toastT;
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 3000); }
+document.addEventListener('error', e => { if (e.target.tagName === 'IMG') e.target.remove(); }, true);
+const openModal = id => $('#' + id).hidden = false, closeModal = id => $('#' + id).hidden = true;
+document.addEventListener('click', e => { const c = e.target.closest('[data-close]'); if (c) closeModal(c.dataset.close); });
+const initial = n => (n || '?').trim()[0].toUpperCase();
+const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+function setAv(el, name, photo) { el.style.backgroundImage = photo ? `url(${photo})` : ''; el.textContent = photo ? '' : initial(name); }
 
-function showView(name) {
-  $('#homeView').hidden = name !== 'home';
-  $('#productsView').hidden = name !== 'products';
-  $('#cartView').hidden = name !== 'cart';
-  $$('.bar [data-view]').forEach(button => button.classList.toggle('active', button.dataset.view === name));
-  if (name === 'products') renderProducts();
-  if (name === 'cart') renderCart();
+/* ---------- AUTH ---------- */
+function showAuth(w) {
+  $$('[data-auth]').forEach(x => x.classList.toggle('active', x.dataset.auth === w));
+  $('#loginForm').hidden = w !== 'login'; $('#signupForm').hidden = w !== 'signup'; $('#resetForm').hidden = w !== 'reset';
+  $('.auth-card .tabs').hidden = w === 'reset'; authMsg('');
+}
+function authMsg(t, ok) { const m = $('#authMsg'); m.textContent = t; m.className = ok ? 'ok' : 'err'; }
+$$('[data-auth]').forEach(b => b.onclick = () => showAuth(b.dataset.auth));
+$('#forgotLink').onclick = e => { e.preventDefault(); showAuth('reset'); };
+$('#backLogin').onclick = e => { e.preventDefault(); showAuth('login'); };
+$('#resetForm').onsubmit = e => {
+  e.preventDefault(); const em = $('#rsEmail').value.trim().toLowerCase();
+  if (!users[em]) return authMsg('No account found with that email.');
+  users[em].pass = $('#rsPass').value; save(); showAuth('login'); authMsg('Password updated. You can log in now.', true);
+};
+const newUser = (name, pass, extra = {}) => ({name, pass, cart: [], orders: [], wish: [], msgs: [], voted: [], profile: {photo: '', phone: '', addr: '', bio: ''}, ...extra});
+$('#signupForm').onsubmit = e => {
+  e.preventDefault();
+  const em = $('#suEmail').value.trim().toLowerCase();
+  if ($('#suPass').value !== $('#suPass2').value) return authMsg('Passwords do not match.');
+  if (users[em]) return authMsg('Email already registered. Please log in.');
+  users[em] = newUser($('#suName').value.trim(), $('#suPass').value); save(); startSession(em);
+};
+$('#loginForm').onsubmit = e => {
+  e.preventDefault();
+  const em = $('#liEmail').value.trim().toLowerCase();
+  if (!users[em] || users[em].pass !== $('#liPass').value) return authMsg('Wrong email or password.');
+  startSession(em);
+};
+let socName = '';
+$('#socBtns').onclick = e => { const b = e.target.closest('[data-soc]'); if (!b) return; socName = b.dataset.soc; $('#socTitle').textContent = 'Continue with ' + socName; $('#socForm').reset(); openModal('socModal'); };
+$('#socForm').onsubmit = e => {
+  e.preventDefault(); const em = $('#socEmail').value.trim().toLowerCase();
+  if (!users[em]) { users[em] = newUser($('#socName').value.trim(), 'social-' + Math.random().toString(36).slice(2), {social: socName}); save(); }
+  closeModal('socModal'); startSession(em);
+};
+function startSession(em) {
+  session = em; store('ml_session', em); me = users[em];
+  isAdmin = em === OWNER_EMAIL;
+  me.profile = me.profile || {photo: '', phone: '', addr: '', bio: ''}; me.voted = me.voted || []; me.msgs = me.msgs || [];
+  $('#auth').hidden = true; $('#app').hidden = false; $('#loginLink').hidden = true;
+  $('#profileBtn').hidden = false; $('#logout').hidden = false; $('#adminNav').hidden = !isAdmin;
+  $('#coName').value = me.name; $('#coEmail').value = em; $('#coPhone').value = me.profile.phone; $('#coAddr').value = me.profile.addr;
+  renderHeader(); go(isAdmin ? 'admin' : pendingPage); pendingPage = 'home'; updateCount(); toast(isAdmin ? 'Welcome, owner!' : 'Welcome to Matcha Lavur!');
+}
+function startGuest() {
+  me = null; isAdmin = false; session = null;
+  store('ml_session', null);
+  $('#auth').hidden = true; $('#app').hidden = false;
+  $('#loginLink').hidden = false; $('#profileBtn').hidden = true; $('#logout').hidden = true; $('#adminNav').hidden = true;
+  go('home');
+}
+function requireLogin(page = 'home') {
+  if (me) return true;
+  pendingPage = page;
+  showAuth('login'); $('#auth').hidden = false;
+  return false;
+}
+$('#loginLink').onclick = () => {
+  pendingPage = $('[data-page]:not([hidden])')?.dataset.page || 'home';
+  showAuth('login'); $('#auth').hidden = false;
+};
+$('#cancelLogin').onclick = () => {
+  const page = pendingPage;
+  pendingPage = 'home';
+  startGuest();
+  go(page);
+};
+$('#logout').onclick = () => startGuest();
+$('#reviewLogin').onclick = () => requireLogin('reviews');
+
+/* ---------- PROFILE ---------- */
+function renderHeader() { $('#hello').textContent = 'Hi, ' + me.name.split(' ')[0]; setAv($('#avHead'), me.name, me.profile.photo); }
+$('#profileBtn').onclick = () => {
+  pfPhoto = me.profile.photo; $('#pfName').value = me.name; $('#pfEmail').value = session; $('#pfPhone').value = me.profile.phone;
+  $('#pfAddr').value = me.profile.addr; $('#pfBio').value = me.profile.bio; setAv($('#pfAv'), me.name, pfPhoto); openModal('profileModal');
+};
+$('#pfPhoto').onchange = e => {
+  const f = e.target.files[0]; if (!f) return; const fr = new FileReader();
+  fr.onload = () => { const im = new Image(); im.onload = () => {
+    const c = document.createElement('canvas'), s = 180; c.width = c.height = s; const m = Math.min(im.width, im.height);
+    c.getContext('2d').drawImage(im, (im.width - m) / 2, (im.height - m) / 2, m, m, 0, 0, s, s);
+    pfPhoto = c.toDataURL('image/jpeg', .85); setAv($('#pfAv'), $('#pfName').value, pfPhoto); }; im.src = fr.result; };
+  fr.readAsDataURL(f);
+};
+$('#pfRemove').onclick = () => { pfPhoto = ''; $('#pfPhoto').value = ''; setAv($('#pfAv'), $('#pfName').value, ''); };
+$('#profileForm').onsubmit = e => {
+  e.preventDefault(); me.name = $('#pfName').value.trim() || me.name;
+  Object.assign(me.profile, {photo: pfPhoto || '', phone: $('#pfPhone').value.trim(), addr: $('#pfAddr').value.trim(), bio: $('#pfBio').value.trim()});
+  save(); renderHeader(); closeModal('profileModal'); if (isAdmin) renderAdmin(); toast('Profile updated');
+};
+
+/* ---------- NAVIGATION ---------- */
+function go(page) {
+  if (['checkout', 'mypurchase', 'cart', 'message'].includes(page) && !requireLogin(page)) return;
+  if (page === 'admin' && !isAdmin) return go('home');
+  $$('[data-page]').forEach(s => s.hidden = s.dataset.page !== page);
+  $$('#nav button').forEach(b => b.classList.toggle('active', b.dataset.go === page));
+  ({products: renderProducts, reviews: renderReviews, checkout: renderCheckout, mypurchase: renderOrders, cart: renderCart, message: renderChat, support: renderFaq, admin: renderAdmin})[page]?.();
   window.scrollTo(0, 0);
 }
+document.addEventListener('click', e => { const t = e.target.closest('[data-go]'); if (t) go(t.dataset.go); });
 
+/* ---------- HOME ---------- */
+$('#voucherCards').innerHTML = [...VOUCHERS, ...DISCOUNTS].map(v =>
+  `<div class="vcard"><b>${v.label}</b><small>${v.min ? 'Min. spend ' + peso(v.min) : 'No minimum spend'}</small><br>Code: <code>${v.code}</code></div>`).join('');
+$$('.flip').forEach(f => f.onclick = () => f.classList.toggle('on'));
+
+/* ---------- PRODUCTS ---------- */
+const stars = n => '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
 function renderProducts() {
-  const query = $('#search').value.trim().toLowerCase();
-  const sort = $('#sort').value;
-  const products = PRODUCTS.filter(product =>
-    (category === 'all' || product.cat === category) &&
-    `${product.name} ${product.desc}`.toLowerCase().includes(query)
-  );
-
-  if (sort === 'asc') products.sort((a, b) => a.price - b.price);
-  if (sort === 'desc') products.sort((a, b) => b.price - a.price);
-  if (sort === 'rate') products.sort((a, b) => b.rate - a.rate);
-
-  $('#productGrid').innerHTML = products.map(product => `
-    <article class="prod">
-      <div class="ph product-photo">
-        <img src="${product.img}" alt="${product.name}" loading="lazy">
-        <span>${product.name}</span>
-      </div>
-      <div class="prod-b">
-        <span class="tag">${product.cat}</span>
-        <b>${product.name}</b>
-        <small class="muted">${product.desc}</small>
-        <span class="star" aria-label="${product.rate} out of 5 stars">★ ${product.rate}</span>
-        <span class="price">${peso(product.price)}</span>
-        <button class="btn" data-add="${product.id}">Add to Cart</button>
-      </div>
-    </article>
-  `).join('') || '<p class="empty">No products found.</p>';
+  const q = $('#search').value.toLowerCase(), s = $('#sort').value;
+  const wishlist = me ? me.wish : [];
+  let list = PRODUCTS.filter(p => (cat === 'all' || (cat === 'Wishlist' ? wishlist.includes(p.id) : p.cat === cat)) && (p.name + p.desc).toLowerCase().includes(q));
+  if (s === 'asc') list.sort((a, b) => a.price - b.price); if (s === 'desc') list.sort((a, b) => b.price - a.price); if (s === 'rate') list.sort((a, b) => b.rate - a.rate);
+  $('#productGrid').innerHTML = list.map(p => `<div class="prod">
+    <button class="heart ${wishlist.includes(p.id) ? 'on' : ''}" data-wish="${p.id}" title="Wishlist">♥</button>
+    <div class="zoom" data-view="${p.id}">${phImg(p.img, 'PRODUCT PHOTO')}</div>
+    <div class="prod-b"><span class="tag">${p.cat}</span><b>${p.name}</b><small class="muted">${p.desc}</small>
+    <span class="star">${stars(p.rate)} <small>${p.rate}</small></span><span class="price">${peso(p.price)}</span>
+    <small class="muted">${Math.max(0, Number(stock[p.id]) || 0)} available</small>
+    <button class="btn" data-add="${p.id}" ${Number(stock[p.id]) < 1 ? 'disabled' : ''}>${Number(stock[p.id]) < 1 ? 'Out of stock' : 'Add to Cart'}</button></div></div>`).join('') || '<p class="empty">No products found.</p>';
 }
-
-function updateCartCount() {
-  const count = [...cart.values()].reduce((total, quantity) => total + quantity, 0);
-  $('#cartCount').textContent = count;
-}
-
-function renderCart() {
-  if (cart.size === 0) {
-    $('#cartBox').innerHTML = '<div class="card empty"><b>Your cart is empty</b><p>Browse the collection to add a few favorites.</p><button class="btn" data-view="products">Browse Products</button></div>';
-    return;
+$('#search').oninput = $('#sort').onchange = renderProducts;
+$('#chips').onclick = e => { const c = e.target.closest('.chip'); if (!c) return; cat = c.dataset.cat; $$('#chips .chip').forEach(x => x.classList.toggle('active', x === c)); renderProducts(); };
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-add]'), w = e.target.closest('[data-wish]');
+  if (a) {
+    if (!requireLogin('products')) return;
+    const id = +a.dataset.add, it = me.cart.find(i => i.id === id);
+    if ((Number(stock[id]) || 0) < (it ? it.qty + 1 : 1)) return toast('Sorry, this item is out of stock.');
+    it ? it.qty++ : me.cart.push({id, qty: 1}); save(); updateCount();
+    toast('Added to cart: ' + P(id).name); if (!$('[data-page=cart]').hidden) renderCart();
   }
-
-  const items = [...cart].map(([id, quantity]) => ({product: PRODUCTS.find(item => item.id === id), quantity}));
-  const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  $('#cartBox').innerHTML = `
-    <div class="card">
-      ${items.map(({product, quantity}) => `
-        <div class="cart-preview">
-          <div><b>${product.name}</b><br><span class="muted">${peso(product.price)} each</span></div>
-          <div class="qty">
-            <button data-change="${product.id}" data-delta="-1" aria-label="Remove one ${product.name}">−</button>
-            <b>${quantity}</b>
-            <button data-change="${product.id}" data-delta="1" aria-label="Add one ${product.name}">+</button>
-            <button class="remove-item" data-remove="${product.id}">Remove</button>
-          </div>
-          <b>${peso(product.price * quantity)}</b>
-        </div>
-      `).join('')}
-      <div class="row total"><span>Catalog total</span><span>${peso(total)}</span></div>
-      <p class="muted">This is a catalog preview only. No order or payment will be submitted.</p>
-      <button class="btn ghost" data-clear>Clear Cart</button>
-    </div>
-  `;
-}
-
-function showToast(message) {
-  const toast = $('#toast');
-  toast.textContent = message;
-  toast.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
-}
-
-document.addEventListener('click', event => {
-  const viewButton = event.target.closest('[data-view]');
-  if (viewButton) {
-    event.preventDefault();
-    showView(viewButton.dataset.view);
-  }
-
-  const addButton = event.target.closest('[data-add]');
-  if (addButton) {
-    const id = Number(addButton.dataset.add);
-    cart.set(id, (cart.get(id) || 0) + 1);
-    updateCartCount();
-    showToast('Added to your temporary cart.');
-  }
-
-  const changeButton = event.target.closest('[data-change]');
-  if (changeButton) {
-    const id = Number(changeButton.dataset.change);
-    const quantity = (cart.get(id) || 0) + Number(changeButton.dataset.delta);
-    if (quantity > 0) cart.set(id, quantity);
-    else cart.delete(id);
-    updateCartCount();
-    renderCart();
-  }
-
-  const removeButton = event.target.closest('[data-remove]');
-  if (removeButton) {
-    cart.delete(Number(removeButton.dataset.remove));
-    updateCartCount();
-    renderCart();
-  }
-
-  if (event.target.closest('[data-clear]')) {
-    cart.clear();
-    updateCartCount();
-    renderCart();
-  }
-
-  const chip = event.target.closest('[data-cat]');
-  if (chip) {
-    category = chip.dataset.cat;
-    $$('#chips .chip').forEach(button => button.classList.toggle('active', button === chip));
-    renderProducts();
-  }
-
-  const flip = event.target.closest('.flip');
-  if (flip) flip.classList.toggle('on');
+  if (w) { if (!requireLogin('products')) return; const id = +w.dataset.wish, i = me.wish.indexOf(id); i < 0 ? me.wish.push(id) : me.wish.splice(i, 1); save(); renderProducts(); }
 });
 
-$('#search').addEventListener('input', renderProducts);
-$('#sort').addEventListener('change', renderProducts);
-document.addEventListener('error', event => {
-  if (event.target instanceof HTMLImageElement) event.target.remove();
-}, true);
+/* ---------- CART ---------- */
+function updateCount() { const c = $('#cartCount'); c.textContent = me.cart.reduce((n, i) => n + i.qty, 0); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
+const subtotal = () => me.cart.reduce((n, i) => n + P(i.id).price * i.qty, 0);
+function renderCart() {
+  if (!me.cart.length) return $('#cartBox').innerHTML = `<div class="card empty">${ICON_BAG}<b>Your cart is empty</b><p>Add some matcha to get started.</p><button class="btn" data-go="products">Start Shopping</button></div>`;
+  const sub = subtotal(), offers = [...VOUCHERS, ...DISCOUNTS].filter(v => v.min > sub).sort((a, b) => a.min - b.min), nx = offers[0];
+  const prog = nx ? `Add <b>${peso(nx.min - sub)}</b> more to unlock <b>${nx.code}</b> (${nx.label}).<i style="--w:${Math.min(100, sub / nx.min * 100)}%"></i>` : `You qualify for every voucher and discount. Choose one at checkout!<i style="--w:100%"></i>`;
+  const sugg = PRODUCTS.filter(p => !me.cart.some(i => i.id === p.id) && Number(stock[p.id]) > 0).sort((a, b) => b.rate - a.rate).slice(0, 4);
+  $('#cartBox').innerHTML = `<div class="cart-layout"><div>
+    <div class="cart-top"><span>${me.cart.reduce((n, i) => n + i.qty, 0)} item(s) in your cart</span><button data-clear>Clear cart</button></div>
+    ${me.cart.map(i => { const p = P(i.id); return `<div class="cart-row">${phImg(p.img, 'PHOTO')}
+      <div class="cart-info"><span class="tag">${p.cat}</span><b>${p.name}</b><span class="muted">${peso(p.price)} each</span>
+      <div class="links"><button data-sv="${i.id}">Save for later</button><button class="rm" data-rm="${i.id}">Remove</button></div></div>
+      <div class="cart-end"><div class="qty"><button data-q="${i.id}" data-d="-1">-</button><b>${i.qty}</b><button data-q="${i.id}" data-d="1">+</button></div><b class="price">${peso(p.price * i.qty)}</b></div></div>`; }).join('')}</div>
+    <aside class="card cart-sum"><h4>Order Summary</h4><div class="prog">${prog}</div>
+      <div class="row"><span>Subtotal</span><span>${peso(sub)}</span></div><div class="row"><span>Shipping</span><span>Calculated at checkout</span></div>
+      <div class="row total"><span>Estimated Total</span><span>${peso(sub)}</span></div>
+      <button class="btn big" data-go="checkout">Proceed to Purchase</button></aside></div>
+    <h4 class="sec-h">You may also like</h4><div class="mini">${sugg.map(p => `<div><b>${p.name}</b><span class="price">${peso(p.price)}</span><button class="btn small" data-add="${p.id}">Add to Cart</button></div>`).join('')}</div>`;
+}
+$('#cartBox').onclick = e => {
+  const q = e.target.closest('[data-q]'), r = e.target.closest('[data-rm]'), s = e.target.closest('[data-sv]'), c = e.target.closest('[data-clear]');
+  if (q) {
+    const it = me.cart.find(i => i.id == q.dataset.q);
+    if (+q.dataset.d > 0 && it.qty >= Number(stock[it.id])) return toast('Available stock limit reached.');
+    it.qty += +q.dataset.d; if (it.qty < 1) me.cart = me.cart.filter(i => i !== it);
+  }
+  if (r) me.cart = me.cart.filter(i => i.id != r.dataset.rm);
+  if (s) { const id = +s.dataset.sv; if (!me.wish.includes(id)) me.wish.push(id); me.cart = me.cart.filter(i => i.id !== id); toast('Saved to your wishlist'); }
+  if (c && confirm('Remove all items from your cart?')) me.cart = [];
+  if (q || r || s || c) { save(); updateCount(); renderCart(); }
+};
 
-renderProducts();
-updateCartCount();
+/* ---------- CHECKOUT (PURCHASE) ---------- */
+const val = n => document.querySelector(`input[name=${n}]:checked`).value;
+function deliveryDetails() {
+  const isDavao = /\bdavao\s+city\b/i.test($('#coAddr').value);
+  const hasFreshItems = me.cart.some(i => ['Drinks', 'Sweets'].includes(P(i.id).cat));
+  const pickup = val('fulfillment') === 'pickup';
+  const fee = pickup ? 0 : (isDavao && hasFreshItems ? SHIP.exp : SHIP.std);
+  let estimate = hasFreshItems && isDavao ? 'Drinks and sweets: minutes' : '';
+  if (me.cart.some(i => ['Powder', 'Merchandise'].includes(P(i.id).cat))) {
+    estimate += (estimate ? '; ' : '') + 'Powder and merchandise: 2–4 days';
+  }
+  return {
+    isDavao, hasFreshItems, pickup, fee,
+    label: pickup ? 'Pick Up' : (isDavao && hasFreshItems ? 'Davao City delivery' : 'Delivery'),
+    estimate: pickup ? 'Pickup selected' : (estimate || 'Powder and merchandise: 2–4 days')
+  };
+}
+function calc() {
+  const sub = subtotal(); let ship = me.cart.length ? deliveryDetails().fee : 0, disc = 0, msg = '', code = null;
+  const mode = val('promo');
+  if (mode !== 'none') {
+    const v = (mode === 'voucher' ? VOUCHERS : DISCOUNTS).find(x => x.code === $('#promoSel').value);
+    if (v) {
+      if (sub < v.min) msg = `Spend at least ${peso(v.min)} to use ${v.code}.`;
+      else { code = v.code; if (v.type === 'amt') disc = v.val; if (v.type === 'pct') disc = sub * v.val / 100; if (v.type === 'ship') disc = ship; msg = `${v.code} applied!`; }
+    }
+  }
+  disc = Math.min(disc, sub + ship);
+  return {sub, ship, disc, code, msg, total: sub + ship - disc};
+}
+function syncWallet() {
+  const w = val('wallet'), pp = w === 'PayPal';
+  $('#walletNo').placeholder = pp ? 'PayPal email address' : w + ' mobile number (09XXXXXXXXX)'; $('#walletNo').type = pp ? 'email' : 'text';
+  $('#walletPin').placeholder = pp ? 'PayPal password' : 'MPIN (4 digits)'; $('#walletPin').maxLength = pp ? 40 : 4;
+}
+function renderCheckout() {
+  const empty = !me.cart.length; $('#coEmpty').hidden = !empty; $('#coWrap').hidden = empty; if (empty) return;
+  const delivery = deliveryDetails();
+  $('#deliveryFee').textContent = delivery.pickup ? 'Free' : peso(delivery.fee);
+  $('#deliveryHint').textContent = delivery.isDavao
+    ? 'Davao City orders: drinks and sweets arrive in minutes; powder and merchandise deliver in 2–4 days.'
+    : 'Outside Davao City, only powder and merchandise can be ordered; delivery takes 2–4 days.';
+  $('#deliveryHint').classList.toggle('err', !delivery.isDavao && delivery.hasFreshItems);
+  const mode = val('promo'), list = mode === 'voucher' ? VOUCHERS : DISCOUNTS;
+  if ($('#promoSel').dataset.mode !== mode) {
+    $('#promoSel').dataset.mode = mode; $('#promoSel').hidden = mode === 'none';
+    $('#promoSel').innerHTML = mode === 'none' ? '' : list.map(v => `<option value="${v.code}">${v.code} - ${v.label}${v.min ? ' (min ' + peso(v.min) + ')' : ''}</option>`).join('');
+  }
+  const c = calc();
+  $('#coItems').innerHTML = me.cart.map(i => `<div class="item"><span>${i.qty} x ${P(i.id).name}</span><span>${peso(P(i.id).price * i.qty)}</span></div>`).join('');
+  $('#sSub').textContent = peso(c.sub); $('#sShip').textContent = peso(c.ship);
+  $('#sDisc').textContent = c.disc ? '-' + peso(c.disc) : peso(0); $('#sTotal').textContent = peso(c.total); $('#promoMsg').textContent = c.msg;
+  const pay = val('pay'); $('#sub-ewallet').hidden = pay !== 'ewallet'; $('#sub-bank').hidden = pay !== 'bank'; syncWallet(); syncSteps();
+}
+function syncSteps() {
+  const d = $('#coName').value.trim() && $('#coAddr').value.trim() && $('#coEmail').value.trim() && $('#coPhone').value.trim(), pay = val('pay');
+  const p = pay === 'cod' || (pay === 'ewallet' && $('#wName').value.trim() && $('#walletNo').value.trim() && $('#walletPin').value) || (pay === 'bank' && $('#bName').value.trim() && $('#bankNo').value && $('#bExp').value && $('#bCvv').value);
+  $('#st2').classList.toggle('done', !!d); $('#st3').classList.toggle('done', !!(d && p)); $('#st4').classList.toggle('done', !!(d && p));
+}
+$('#coForm').addEventListener('change', renderCheckout); $('#coForm').addEventListener('input', () => { renderCheckout(); syncSteps(); });
+$('#bExp').addEventListener('input', e => { let v = e.target.value.replace(/\D/g, '').slice(0, 4); if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2); e.target.value = v; });
+$('#useProfile').onclick = () => {
+  $('#coName').value = me.name; $('#coEmail').value = session; $('#coPhone').value = me.profile.phone; $('#coAddr').value = me.profile.addr;
+  syncSteps(); toast(me.profile.phone || me.profile.addr ? 'Profile details filled in' : 'Add your phone and address in My Profile first');
+};
+const last4 = s => '•••• ' + String(s).replace(/\D/g, '').slice(-4);
+$('#coForm').onsubmit = e => {
+  e.preventDefault(); const err = $('#coErr'); err.textContent = '';
+  const delivery = deliveryDetails();
+  if (!delivery.isDavao && delivery.hasFreshItems) return err.textContent = 'Drinks and sweets are only available for Davao City customers. Remove those items to continue.';
+  const unavailable = me.cart.find(i => Number(stock[i.id]) < i.qty);
+  if (unavailable) return err.textContent = `${P(unavailable.id).name} has only ${Math.max(0, Number(stock[unavailable.id]) || 0)} available. Update your cart to continue.`;
+  const phone = $('#coPhone').value.trim(), pay = val('pay'), nm = /^[A-Za-z][A-Za-z .,'-]{1,}$/;
+  if (!/^09\d{9}$/.test(phone)) return err.textContent = 'Enter a valid 11-digit contact number starting with 09.';
+  let method = 'Cash on Delivery';
+  if (pay === 'ewallet') {
+    const w = val('wallet'), no = $('#walletNo').value.trim(), pin = $('#walletPin').value;
+    if (!nm.test($('#wName').value.trim())) return err.textContent = 'Enter the ' + w + ' account name.';
+    if (w === 'PayPal') {
+      if (!/^\S+@\S+\.\S+$/.test(no)) return err.textContent = 'Enter a valid PayPal email address.';
+      if (pin.length < 6) return err.textContent = 'Enter your PayPal password (at least 6 characters).';
+      method = 'PayPal - ' + $('#wName').value.trim() + ' (' + no[0] + '***' + no.slice(no.indexOf('@')) + ')';
+    } else {
+      if (!/^09\d{9}$/.test(no)) return err.textContent = 'Enter a valid ' + w + ' mobile number (09XXXXXXXXX).';
+      if (!/^\d{4}$/.test(pin)) return err.textContent = 'Enter your 4-digit ' + w + ' MPIN.';
+      method = w + ' - ' + $('#wName').value.trim() + ' (' + last4(no) + ')';
+    }
+  }
+  if (pay === 'bank') {
+    const ex = $('#bExp').value, m = ex.match(/^(0[1-9]|1[0-2])\/(\d{2})$/), now = new Date();
+    if (!nm.test($('#bName').value.trim())) return err.textContent = 'Enter the account name.';
+    if (!/^\d{10,16}$/.test($('#bankNo').value.trim())) return err.textContent = 'Enter a valid account / card number (10 to 16 digits).';
+    if (!m) return err.textContent = 'Enter the expiry date as MM/YY.';
+    if (new Date(2000 + +m[2], +m[1], 0, 23, 59) < now) return err.textContent = 'This card or account has expired.';
+    if (!/^\d{3,4}$/.test($('#bCvv').value)) return err.textContent = 'Enter the 3 or 4-digit CVV.';
+    method = $('#bankName').value + ' Online Banking - ' + $('#bName').value.trim() + ' (' + last4($('#bankNo').value) + ')';
+  }
+  const c = calc(), o = {id: 'ML' + Date.now().toString().slice(-8), date: new Date().toLocaleString(), items: me.cart.map(i => ({...i})), total: c.total, disc: c.disc, code: c.code,
+    method, delivery: delivery.label, fulfillment: delivery.pickup ? 'Pick Up' : delivery.estimate, note: $('#coNote').value.trim(), status: pay === 'cod' ? 'To Ship' : 'To Pay', rated: false, name: $('#coName').value, addr: $('#coAddr').value, phone, owner: session};
+  me.cart.forEach(i => { stock[i.id] = Math.max(0, Number(stock[i.id]) - i.qty); });
+  saveStock();
+  me.orders.unshift(o); me.cart = []; save(); updateCount();
+  ['wName', 'walletNo', 'walletPin', 'bName', 'bankNo', 'bExp', 'bCvv', 'coNote'].forEach(id => $('#' + id).value = '');
+  if (pay === 'cod') { orderTab = 'To Ship'; toast('Order placed!'); go('mypurchase'); } else openOtp(o);
+};
+
+/* OTP payment confirmation */
+function openOtp(o) { otpOrder = o; $('#otpAmt').textContent = peso(o.total); $('#otpTo').textContent = o.method; $('#otpInput').value = ''; $('#otpErr').textContent = ''; openModal('otpModal'); $('#otpInput').focus(); }
+$('#otpForm').onsubmit = e => {
+  e.preventDefault(); if ($('#otpInput').value.trim() !== '123456') return $('#otpErr').textContent = 'Incorrect OTP. Please try again.';
+  otpOrder.status = 'To Ship'; save(); closeModal('otpModal'); orderTab = 'To Ship'; toast('Payment successful!'); go('mypurchase');
+};
+$('#otpCancel').onclick = () => { closeModal('otpModal'); orderTab = 'To Pay'; toast('Order saved in To Pay. You can pay anytime.'); go('mypurchase'); };
+
+/* ---------- MY PURCHASE ---------- */
+const TABS = ['To Pay', 'To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive', 'Completed', 'Return/Refund', 'Cancelled', 'To Rate'], FLOW = ['To Pay', 'To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive', 'Completed'];
+const ordersOf = t => me.orders.filter(o => t === 'To Rate' ? o.status === 'Completed' && !o.rated : o.status === t);
+function renderOrders() {
+  const act = me.orders.filter(o => ['To Pay', 'To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive'].includes(o.status)).length, spent = me.orders.filter(o => !['Cancelled', 'Return/Refund'].includes(o.status)).reduce((n, o) => n + o.total, 0);
+  $('#orderStats').innerHTML = `<div class="stat"><small>Total orders</small><b>${me.orders.length}</b></div><div class="stat"><small>In progress</small><b>${act}</b></div><div class="stat"><small>Total spent</small><b>${peso(spent)}</b></div>`;
+  $('#orderTabs').innerHTML = TABS.map(t => { const n = ordersOf(t).length; return `<button class="tab ${t === orderTab ? 'active' : ''}" data-tab="${t}">${t}${n ? ' (' + n + ')' : ''}</button>`; }).join('');
+  const q = $('#orderSearch').value.trim().toLowerCase();
+  const list = ordersOf(orderTab).filter(o => !q || o.id.toLowerCase().includes(q) || o.items.some(i => P(i.id).name.toLowerCase().includes(q)));
+  $('#orderList').innerHTML = list.map(o => `<div class="card order"><div class="order-h"><b>Order #${o.id}</b><span class="muted">${o.date}</span><span class="status st-${o.status.replace(/\W+/g, '')}">${o.status}</span></div>
+    ${FLOW.includes(o.status) ? `<div class="track">${(o.fulfillment === 'Pick Up' ? FLOW.filter(s => s !== 'Out for Delivery') : FLOW.filter(s => s !== 'Ready for Pickup')).map((s, i, steps) => `<span class="${i <= steps.indexOf(o.status) ? 'on' : ''}">${s}</span>`).join('')}</div>` : ''}
+    ${o.items.map(i => `<div class="oi">${phImg(P(i.id).img, 'IMG')}<div><b>${P(i.id).name}</b><br><small>Qty ${i.qty} x ${peso(P(i.id).price)}</small></div><b>${peso(P(i.id).price * i.qty)}</b></div>`).join('')}
+    <div class="row"><span>Payment: ${o.method}${o.code ? ' | Promo: ' + o.code : ''}${o.delivery ? ' | ' + o.delivery : ''}${o.fulfillment ? ' | ' + o.fulfillment : ''}</span><b>Total ${peso(o.total)}</b></div>
+    <small class="muted">Ship to: ${o.name}, ${o.addr} | ${o.phone}${o.note ? ' | Note: ' + o.note.replace(/</g, '&lt;') : ''}</small><div class="actions">${actions(o)}</div></div>`).join('')
+    || `<div class="card empty">${ICON_BAG}<b>${q ? 'No matching orders' : 'No orders under "' + orderTab + '" yet'}</b><p>${q ? 'Try a different order number or product.' : 'Your orders will show up here.'}</p><button class="btn" data-go="products">Shop Matcha</button></div>`;
+}
+function restockOrder(o) {
+  if (o.stockReturned) return;
+  o.items.forEach(i => { stock[i.id] = (Number(stock[i.id]) || 0) + i.qty; });
+  o.stockReturned = true;
+  saveStock();
+}
+$('#orderSearch').oninput = renderOrders;
+function actions(o) {
+  const b = (a, l, c = '') => `<button class="btn small ${c}" data-act="${a}" data-id="${o.id}">${l}</button>`;
+  return ({'To Pay': b('pay', 'Pay Now') + b('cancel', 'Cancel Order', 'danger'),
+    'To Ship': b('cancel', 'Cancel Order', 'danger'),
+    'To Receive': b('receive', 'Order Received'),
+    'Completed': (o.rated ? '' : b('rate', 'Rate', 'pink')) + b('again', 'Buy Again', 'ghost') + b('ret', 'Request Return/Refund', 'ghost'),
+    'Return/Refund': `<span class="muted">${o.refundDecision ? 'Refund request ' + o.refundDecision.toLowerCase() + ' by the seller.' : 'Return requested. Waiting for the seller to review it.'}</span>`,
+    'Cancelled': b('again', 'Buy Again', 'ghost')})[o.status] || '';
+}
+$('#orderTabs').onclick = e => { const t = e.target.closest('[data-tab]'); if (t) { orderTab = t.dataset.tab; renderOrders(); } };
+$('#orderList').onclick = e => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const o = me.orders.find(x => x.id === b.dataset.id), a = b.dataset.act;
+  if (a === 'pay') return openOtp(o);
+  if (a === 'cancel') { if (!confirm('Cancel this order?')) return; o.status = 'Cancelled'; orderTab = 'Cancelled'; restockOrder(o); }
+  if (a === 'receive') { o.status = 'Completed'; orderTab = 'Completed'; toast('Order completed. Please rate your items!'); }
+  if (a === 'ret') { const r = prompt('Reason for return/refund?'); if (!r) return; o.status = 'Return/Refund'; orderTab = 'Return/Refund'; }
+  if (a === 'again') { o.items.forEach(i => { const c = me.cart.find(x => x.id === i.id); c ? c.qty += i.qty : me.cart.push({...i}); }); updateCount(); save(); return go('cart'); }
+  if (a === 'rate') { rateOrder = o; save(); return go('reviews'); }
+  save(); renderOrders();
+};
+
+/* ---------- REVIEWS ---------- */
+const allReviews = () => [...userReviews, ...SEED_REVIEWS];
+function renderReviews() {
+  const opts = rateOrder ? rateOrder.items.map(i => P(i.id)) : PRODUCTS, all = allReviews();
+  $('#reviewLoginNote').hidden = !!me;
+  $('#reviewForm').querySelectorAll('select, textarea, input, button[type="submit"]').forEach(el => { el.disabled = !me; });
+  $('#reviewForm > button').disabled = !me;
+  $('#rvProduct').innerHTML = opts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  $('#rateNote').textContent = rateOrder ? `Rating order #${rateOrder.id}` : 'Choose a product and tell us what you think.';
+  $('#stars').innerHTML = [1, 2, 3, 4, 5].map(n => `<button type="button" class="${n <= rating ? 'on' : ''}" data-s="${n}" ${me ? '' : 'disabled'}>★</button>`).join('');
+  const avg = all.reduce((n, r) => n + r.stars, 0) / all.length;
+  $('#rSummary').innerHTML = `<div><span class="big">${avg.toFixed(1)}</span><span class="star">${stars(avg)}</span><small class="muted">${all.length} reviews</small></div>
+    <div class="bars">${[5, 4, 3, 2, 1].map(n => { const c = all.filter(r => r.stars === n).length; return `<div><span>${n}★</span><i style="--w:${c / all.length * 100}%"></i><span>${c}</span></div>`; }).join('')}</div>`;
+  const list = all.filter(r => rf === 'all' || (rf === 'photo' ? r.img : rf === '3' ? r.stars <= 3 : r.stars === +rf));
+  $('#reviewList').innerHTML = list.map(r => { const n = (r.help || 0) + (helpful[r.id] || 0), on = me ? me.voted.includes(r.id) : false, p = P(r.pid);
+    return `<div class="card rv"><span class="rv-av">${initial(r.name)}</span><div class="rv-main"><div class="rv-top"><b>${r.name}</b><small>${r.date}</small></div>
+    <span class="star">${stars(r.stars)}</span><p><span class="tag">${p ? p.name : 'Product'}</span></p><p>${r.text}</p>
+    <button class="helpful ${on ? 'on' : ''}" data-help="${r.id}">Helpful (${n})</button></div>${r.img ? phImg(r.img, 'PHOTO') : ''}</div>`; }).join('') || '<div class="card empty">No reviews match this filter yet.</div>';
+}
+$('#rFilter').onclick = e => { const c = e.target.closest('[data-rf]'); if (!c) return; rf = c.dataset.rf; $$('#rFilter .chip').forEach(x => x.classList.toggle('active', x === c)); renderReviews(); };
+$('#reviewList').onclick = e => {
+  const h = e.target.closest('[data-help]'); if (!h) return; if (!requireLogin()) return; const id = h.dataset.help;
+  if (me.voted.includes(id)) { me.voted = me.voted.filter(x => x !== id); helpful[id] = (helpful[id] || 1) - 1; } else { me.voted.push(id); helpful[id] = (helpful[id] || 0) + 1; }
+  store('ml_helpful', helpful); save(); renderReviews();
+};
+$('#stars').onclick = e => { const s = e.target.closest('[data-s]'); if (s) { rating = +s.dataset.s; renderReviews(); } };
+$('#reviewForm').onsubmit = async e => {
+  e.preventDefault(); if (!requireLogin('reviews')) return; if (!rating) return toast('Please choose a star rating');
+  const f = $('#rvPhoto').files[0];
+  const img = f ? await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); }) : '';
+  userReviews.unshift({id: 'u' + Date.now(), name: me.name, pid: +$('#rvProduct').value, stars: rating, text: $('#rvText').value.replace(/</g, '&lt;'), img, date: new Date().toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}), help: 0});
+  store('ml_reviews_user', userReviews);
+  if (rateOrder) { rateOrder.rated = true; rateOrder = null; save(); }
+  rating = 0; e.target.reset(); toast('Thanks for your review!'); renderReviews();
+};
+
+/* ---------- MESSAGE ---------- */
+const clock = () => new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
+function renderChat() {
+  if (!me.msgs.length) me.msgs.push({from: 'them', t: 'Hi! Welcome to Matcha Lavur. How can I help you today?', time: clock()});
+  const d = new Date(), open = d.getDay() !== 0 && d.getHours() >= 9 && d.getHours() < 18;
+  $('#sellerStatus').textContent = open ? 'Online now' : 'Away. Replies when the store opens';
+  $('#chatBody').innerHTML = '<span class="dsep">Today</span>' + me.msgs.map(m => `<div class="msg ${m.from === 'me' ? 'me' : 'them'}">${escapeHtml(m.t)}<small>${escapeHtml(m.time || '')}</small></div>`).join('');
+  $('#chatBody').scrollTop = 1e6;
+}
+function send(t) {
+  if (!t.trim()) return; me.msgs.push({from: 'me', t: t.trim(), time: clock()}); save(); renderChat();
+}
+$('#chatForm').onsubmit = e => { e.preventDefault(); send($('#chatInput').value); $('#chatInput').value = ''; };
+$('#quick').onclick = e => { if (e.target.tagName === 'BUTTON') send(e.target.textContent); };
+$('#clearChat').onclick = () => { if (confirm('Clear this conversation?')) { me.msgs = []; save(); renderChat(); } };
+$('#shareOrder').onclick = () => { if (!me.orders.length) return toast('You have no orders to share yet'); $('#chatInput').value = 'Hi! I have a question about order #' + me.orders[0].id + '.'; $('#chatInput').focus(); };
+
+/* ---------- OWNER ADMIN ---------- */
+function renderAdmin() {
+  if (!isAdmin) return;
+  const allOrders = Object.entries(users).flatMap(([email, user]) => (user.orders || []).map(order => ({email, user, order})));
+  const salesOrders = allOrders.filter(({order}) => !['To Pay', 'Cancelled', 'Return/Refund'].includes(order.status));
+  const salesTotal = salesOrders.reduce((sum, {order}) => sum + Number(order.total || 0), 0);
+  const pending = allOrders.filter(({order}) => ['To Pay', 'To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive'].includes(order.status)).length;
+  const refunds = allOrders.filter(({order}) => order.status === 'Return/Refund' && !order.refundDecision).length;
+  const productSales = new Map();
+  salesOrders.forEach(({order}) => order.items.forEach(item => {
+    const product = P(item.id);
+    if (!product) return;
+    const current = productSales.get(item.id) || {name: product.name, quantity: 0, revenue: 0};
+    current.quantity += Number(item.qty || 0);
+    current.revenue += product.price * Number(item.qty || 0);
+    productSales.set(item.id, current);
+  }));
+  const bestSellers = [...productSales.values()].sort((a, b) => b.revenue - a.revenue);
+  $('#ownerName').textContent = me.name;
+  $('#ownerEmail').textContent = session;
+  setAv($('#ownerAvatar'), me.name, me.profile.photo);
+  $('#ownerStats').innerHTML = `<div class="stat"><small>Sales from paid / processing orders</small><b>${peso(salesTotal)}</b></div>
+    <div class="stat"><small>Total orders</small><b>${allOrders.length}</b></div>
+    <div class="stat"><small>Active orders</small><b>${pending}</b></div>
+    <div class="stat"><small>Refunds to review</small><b>${refunds}</b></div>`;
+  $('#ownerSales').innerHTML = bestSellers.length ? bestSellers.map(item => `<div class="sales-row"><span>${escapeHtml(item.name)} <small class="muted">(${item.quantity} sold)</small></span><b>${peso(item.revenue)}</b></div>`).join('') : '<p class="muted">Sales will appear here after customers place orders.</p>';
+  $('#adminOrders').innerHTML = allOrders.length ? allOrders.map(({email, user, order}) => `
+    <div class="card order">
+      <div class="order-h"><b>Order #${escapeHtml(order.id)} · ${escapeHtml(user.name)}</b><span>${escapeHtml(email)}</span><span class="status">${escapeHtml(order.status)}</span></div>
+      <p class="muted">${order.items.map(i => `${escapeHtml(P(i.id).name)} × ${i.qty}`).join(', ')} | ${peso(order.total)}</p>
+      <p class="muted">${escapeHtml(order.delivery || '')} ${escapeHtml(order.fulfillment || '')} | ${escapeHtml(order.addr || '')}</p>
+      <div class="actions">
+        <select data-admin-status="${escapeHtml(order.id)}" data-owner="${escapeHtml(email)}">${['To Pay', 'To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive', 'Completed', 'Return/Refund', 'Cancelled'].map(s => `<option ${order.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+        <button class="btn small" data-admin-update="${escapeHtml(order.id)}" data-owner="${escapeHtml(email)}">Update Order</button>
+        ${order.status === 'Return/Refund' && !order.refundDecision ? `<button class="btn small" data-refund="Approved" data-admin-id="${escapeHtml(order.id)}" data-owner="${escapeHtml(email)}">Approve Refund</button><button class="btn small danger" data-refund="Declined" data-admin-id="${escapeHtml(order.id)}" data-owner="${escapeHtml(email)}">Decline Refund</button>` : ''}
+        ${order.refundDecision ? `<span class="muted">Refund ${escapeHtml(order.refundDecision.toLowerCase())}</span>` : ''}
+      </div>
+    </div>`).join('') : '<div class="card empty">No orders yet.</div>';
+  $('#adminStock').innerHTML = PRODUCTS.map(p => `<div class="stock-row"><b>${escapeHtml(p.name)}</b><input type="number" min="0" step="1" value="${Math.max(0, Number(stock[p.id]) || 0)}" data-stock="${p.id}" aria-label="Available stock for ${escapeHtml(p.name)}"><button class="btn small" data-stock-save="${p.id}">Save</button></div>`).join('');
+  const emails = Object.keys(users).filter(email => email !== OWNER_EMAIL);
+  if (!emails.includes(adminCustomer)) adminCustomer = emails[0] || '';
+  $('#adminCustomer').innerHTML = emails.map(email => `<option value="${escapeHtml(email)}" ${email === adminCustomer ? 'selected' : ''}>${escapeHtml(users[email].name)} (${escapeHtml(email)})</option>`).join('');
+  $('#adminCustomer').disabled = !emails.length;
+  renderAdminChat();
+}
+$('#ownerEditProfile').onclick = () => $('#profileBtn').click();
+window.addEventListener('storage', e => {
+  if (e.key === 'ml_users') {
+    users = load('ml_users', {});
+    if (isAdmin && $('[data-page="admin"]:not([hidden])')) renderAdmin();
+  }
+  if (e.key === 'ml_stock') {
+    stock = {...Object.fromEntries(PRODUCTS.map(p => [p.id, 20])), ...load('ml_stock', {})};
+    if (isAdmin && $('[data-page="admin"]:not([hidden])')) renderAdmin();
+  }
+});
+function renderAdminChat() {
+  const customer = users[adminCustomer];
+  if (!customer) return $('#adminChatBody').innerHTML = '<p class="muted">No customer accounts yet.</p>';
+  const msgs = customer.msgs || [];
+  $('#adminChatBody').innerHTML = msgs.map(m => `<div class="msg ${m.from === 'me' ? 'them' : 'me'}">${escapeHtml(m.t)}<small>${escapeHtml(m.time || '')}</small></div>`).join('') || '<p class="muted">No messages from this customer yet.</p>';
+  $('#adminChatBody').scrollTop = 1e6;
+}
+$('#adminCustomer').onchange = e => { adminCustomer = e.target.value; renderAdminChat(); };
+$('#adminChatForm').onsubmit = e => {
+  e.preventDefault();
+  if (!isAdmin || !users[adminCustomer]) return;
+  const text = $('#adminChatInput').value.trim();
+  if (!text) return;
+  users[adminCustomer].msgs = users[adminCustomer].msgs || [];
+  users[adminCustomer].msgs.push({from: 'them', t: text, time: clock()});
+  $('#adminChatInput').value = '';
+  save(); renderAdminChat();
+};
+$('#adminStock').onclick = e => {
+  const button = e.target.closest('[data-stock-save]'); if (!button || !isAdmin) return;
+  const input = $(`[data-stock="${button.dataset.stockSave}"]`), quantity = Number(input.value);
+  if (!Number.isInteger(quantity) || quantity < 0) return toast('Enter a valid non-negative stock quantity.');
+  stock[button.dataset.stockSave] = quantity; saveStock(); renderAdmin();
+  toast('Stock updated.');
+};
+$('#adminOrders').onclick = e => {
+  if (!isAdmin) return;
+  const update = e.target.closest('[data-admin-update]');
+  const refund = e.target.closest('[data-refund]');
+  const orderId = update ? update.dataset.adminUpdate : refund && refund.dataset.adminId;
+  const email = update ? update.dataset.owner : refund && refund.dataset.owner;
+  const order = email && (users[email].orders || []).find(o => o.id === orderId);
+  if (!order) return;
+  if (refund) {
+    order.refundDecision = refund.dataset.refund;
+    if (refund.dataset.refund === 'Approved') restockOrder(order);
+  } else {
+    const statusControl = [...$('#adminOrders').querySelectorAll('[data-admin-status]')].find(el => el.dataset.adminStatus === orderId && el.dataset.owner === email);
+    if (!statusControl) return;
+    const status = statusControl.value;
+    if (status === 'Cancelled') restockOrder(order);
+    order.status = status;
+  }
+  save(); renderAdmin();
+  toast(refund ? `Refund ${refund.dataset.refund.toLowerCase()}.` : 'Order updated.');
+};
+
+/* ---------- SUPPORT ---------- */
+function renderFaq() { $('#faq').innerHTML = FAQ.map(f => `<div class="faq-i"><button>${f[0]}</button><p hidden>${f[1]}</p></div>`).join(''); }
+$('#faq').onclick = e => { const b = e.target.closest('button'); if (b) b.nextElementSibling.hidden = !b.nextElementSibling.hidden; };
+$('#csForm').onsubmit = e => { e.preventDefault(); $('#csDone').textContent = 'Ticket #' + Math.floor(Math.random() * 90000 + 10000) + ' submitted. We will email you soon.'; $('#csMsg').value = ''; };
+
+/* ---------- INIT ---------- */
+$$('img').forEach(i => { if (i.complete && !i.naturalWidth) i.remove(); });
+if (session && users[session]) startSession(session); else startGuest();
+/* ---------- VIEW FULL PRODUCT PICTURE ---------- */
+document.addEventListener('click', e => {
+  const v = e.target.closest('[data-view]');
+  if (v) {
+    const p = P(+v.dataset.view);
+    $('#imgFull').style.backgroundImage = 'url("' + p.img + '")';
+    $('#imgName').textContent = p.name;
+    $('#imgDesc').textContent = p.desc + ' | ' + peso(p.price);
+    $('#imgAdd').dataset.add = p.id;
+    $('#imgAdd').hidden = !me || Number(stock[p.id]) < 1;
+    openModal('imgModal');
+  }
+  if (e.target.id === 'imgModal') closeModal('imgModal');
+});
+$('#imgAdd').addEventListener('click', () => closeModal('imgModal'));

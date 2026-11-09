@@ -1,87 +1,384 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Browse Matcha Lavur drinks, sweets, powders, and matcha merchandise.">
-  <title>MATCHA LAVUR | Matcha Drinks &amp; Sweets</title>
-  <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MATCHA LAVUR | Matcha Drinks & Sweets</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header>
-    <div class="bar">
-      <a class="brand" href="#" data-view="home">
-        <span class="ph logo-sm"><img src="logo.jfif" alt=""></span>
-        <b>MATCHA LAVUR</b>
-      </a>
-      <nav aria-label="Main navigation">
-        <button data-view="home">Home</button>
-        <button data-view="products">Matcha Collection</button>
-        <button data-view="cart">Cart <i id="cartCount" class="badge">0</i></button>
-      </nav>
+
+<!-- ========== LOG IN / SIGN UP ========== -->
+<div id="auth" hidden>
+  <div class="auth-card">
+    <div class="ph logo-ph"><img src="logo.jpg" alt=""><span>LOGO<br>images/logo.png</span></div>
+    <h1>MATCHA LAVUR</h1>
+    <p class="auth-sub">Sign in or create an account to start shopping.</p>
+    <div class="tabs"><button class="tab active" data-auth="login">Log In</button><button class="tab" data-auth="signup">Sign Up</button></div>
+
+    <form id="loginForm">
+      <label for="liEmail">Email address</label>
+      <input id="liEmail" type="email" required>
+      <div class="label-row"><label for="liPass">Password</label><a href="#" id="forgotLink">Forgot password?</a></div>
+      <input id="liPass" type="password" required>
+      <button class="btn big">Log In</button>
+    </form>
+
+    <form id="signupForm" hidden>
+      <label for="suName">Full name</label>
+      <input id="suName" required>
+      <label for="suEmail">Email address</label>
+      <input id="suEmail" type="email" required>
+      <label for="suPass">Password</label>
+      <input id="suPass" type="password" placeholder="At least 6 characters" minlength="6" required>
+      <label for="suPass2">Confirm password</label>
+      <input id="suPass2" type="password" required>
+      <button class="btn big">Create Account</button>
+    </form>
+
+    <form id="resetForm" hidden>
+      <h4>Reset your password</h4>
+      <p class="auth-sub">Enter your account email and choose a new password.</p>
+      <label for="rsEmail">Email address</label>
+      <input id="rsEmail" type="email" required>
+      <label for="rsPass">New password</label>
+      <input id="rsPass" type="password" minlength="6" required>
+      <button class="btn big">Reset Password</button>
+      <a href="#" id="backLogin" class="center-link">Back to log in</a>
+    </form>
+
+    <div class="divider" id="socDivider"><span>or</span></div>
+    <div class="social" id="socBtns">
+      <button type="button" class="soc" data-soc="Google">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path class="g-blue" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path class="g-green" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path class="g-yellow" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path class="g-red" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+      <button type="button" class="soc" data-soc="Facebook">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path class="fb" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        Continue with Facebook
+      </button>
     </div>
-  </header>
+    <button type="button" class="tab" id="cancelLogin">Cancel</button>
+    <p id="authMsg" class="err"></p>
+  </div>
+</div>
 
-  <main>
-    <p class="demo-note">Catalog preview only. Checkout and online payments are not available.</p>
+<!-- ========== APP ========== -->
+<div id="app" hidden>
+<header>
+  <div class="bar">
+    <a class="brand" data-go="home">
+      <span class="ph logo-sm"><img src="logo.jpg" alt=""><span>LOGO</span></span>
+      <b>MATCHA LAVUR</b>
+    </a>
+    <nav id="nav">
+      <button data-go="home">Home</button>
+      <button data-go="products">Matcha Collection</button>
+      <button data-go="reviews">Reviews</button>
+      <button data-go="checkout">Purchase</button>
+      <button data-go="mypurchase">My Purchase</button>
+      <button data-go="cart">Cart <i id="cartCount" class="badge">0</i></button>
+      <button data-go="message">Message</button>
+      <button data-go="support">Support</button>
+      <button data-go="admin" id="adminNav" hidden>Admin</button>
+    </nav>
+    <div class="user">
+      <button class="btn small ghost" id="loginLink" type="button" hidden>Log in</button>
+      <button class="profile-btn" id="profileBtn" title="Edit my profile"><span class="av" id="avHead"></span><span id="hello"></span></button>
+      <button class="btn small ghost" id="logout">Log out</button>
+    </div>
+  </div>
+</header>
 
-    <section id="homeView">
-      <div class="hero">
-        <div class="hero-text">
-          <span class="pill">MATCHA LAVUR</span>
-          <h1>Matcha made for your everyday ritual</h1>
-          <p>Explore handcrafted matcha drinks, sweets, powders, and tea essentials.</p>
-          <button class="btn big" data-view="products">Browse the Collection</button>
+<main>
+<!-- HOME -->
+<section data-page="home">
+  <div class="hero">
+    <div class="hero-text">
+      <span class="pill">NEW OPENING SALE</span>
+      <h2>Welcome to MATCHA LAVUR</h2>
+      <p>Your online matcha shop for freshly crafted matcha drinks and sweets. Shop from home, pay your way, and track every order, all in one place.</p>
+      <button class="btn big" data-go="products">Shop the Collection</button>
+    </div>
+  </div>
+
+  <h3 class="title">New Opening Vouchers and Discounts</h3>
+  <div class="vouchers" id="voucherCards"></div>
+
+  <h3 class="title">Matcha Trivia: Did You Know?</h3>
+  <div class="facts">
+    <button class="flip"><span class="front"><small>Trivia 1</small><b>How is matcha different from regular green tea?</b><i>Tap to reveal</i></span><span class="back">With matcha you drink the whole stone-ground tea leaf, not just the water it was steeped in.</span></button>
+    <button class="flip"><span class="front"><small>Trivia 2</small><b>Why are matcha plants shaded before harvest?</b><i>Tap to reveal</i></span><span class="back">Weeks of shade boost chlorophyll and L-theanine, giving matcha its deep green color and smooth, sweet taste.</span></button>
+    <button class="flip"><span class="front"><small>Trivia 3</small><b>Which compound gives matcha its calm focus?</b><i>Tap to reveal</i></span><span class="back">L-theanine, an amino acid that pairs with caffeine for steady, jitter-free energy.</span></button>
+    <button class="flip"><span class="front"><small>Trivia 4</small><b>How did tea first reach Japan?</b><i>Tap to reveal</i></span><span class="back">Zen monk Eisai brought tea seeds and powdered-tea practice from China to Japan around the year 1191.</span></button>
+  </div>
+
+  <h3 class="title">Meet the Owner and Seller</h3>
+  <div class="about">
+    <figure class="owner-card">
+      <div class="ph owner"><img src="owner1.jfif" alt=""><span>OWNER PHOTO 1<br>images/owner1.jpg</span></div>
+      <figcaption><em>Owner</em><b>(SOPHIA BORERO)</b></figcaption>
+    </figure>
+    <figure class="owner-card">
+      <div class="ph owner"><img src="owner2.jfif" alt=""><span>SELLER PHOTO 2<br>images/owner2.jpg</span></div>
+      <figcaption><em>Seller</em><b>(FATE MALANAS)</b></figcaption>
+    </figure>
+    <div class="about-text">
+      <span class="pill sm">Our Story</span>
+      <h4>Matcha made with care, shipped straight to you</h4>
+      <p>Matcha Lavur is a B2C shop that sells directly to you. Edit this paragraph to tell customers who the owner and seller are, why you started the shop, and where your matcha comes from.</p>
+      <div class="vals"><span>Freshly made</span><span>Direct to you</span><span>Quality matcha</span></div>
+      <div class="hours">
+        <div><small>Open</small><b>Mon to Sat</b></div>
+        <div><small>Hours</small><b>9AM to 6PM</b></div>
+        <div><small>Delivery</small><b>Minutes / 2 to 4 days</b></div>
+      </div>
+      <div class="btns"><button class="btn" data-go="message">Message the Seller</button><button class="btn ghost" data-go="products">View Products</button></div>
+    </div>
+  </div>
+
+  <h3 class="title">Commercial Video</h3>
+  <div class="video-wrap">
+    <video controls autoplay muted loop playsinline poster="poster.jpg"><source src="commercial.mp4" type="video/mp4">Your browser does not support video.</video>
+    <div class="video-desc">
+      <b>The Matcha Lavur Story</b>
+      <p>Discover the world of MATCHA LAVUR, where premium matcha meets creativity and passion. Watch how we prepare our signature matcha drinks, blend refreshing flavors, and create delicious matcha sweets with care. From carefully selected matcha powder to every freshly prepared cup, we bring you a delightful matcha experience in every sip.</code>.</p>
+    </div>
+  </div>
+
+  <h3 class="title">Photo Gallery</h3>
+  <div class="gallery">
+    <figure><div class="ph"><img src="photo1.jpg" alt=""><span>PHOTO<br>images/gallery1.jpg</span></div><figcaption>Welcome to MATCHA LAVUR, your home for delicious matcha drinks and sweet treats.</figcaption></figure>
+    <figure><div class="ph"><img src="photo2.jpg" alt=""><span>PHOTO<br>images/gallery2.jpg</span></div><figcaption>Discover our selection of quality matcha powders, ingredients, and handcrafted sweets.</figcaption></figure>
+    <figure><div class="ph"><img src="ube.jfif" alt=""><span>PHOTO<br>images/gallery3.jpg</span></div><figcaption>Enjoy our refreshing signature drinks, carefully prepared with delicious flavors in every cup.</figcaption></figure>
+    <figure><div class="ph"><img src="team.jfif" alt=""><span>PHOTO<br>images/gallery4.jpg</span></div><figcaption>Our dedicated team prepares and packs every order with care to ensure freshness and quality.</figcaption></figure>
+  </div>
+</section>
+
+<!-- PRODUCTS -->
+<section data-page="products" hidden>
+  <h3 class="title">Matcha Collection</h3>
+  <div class="toolbar">
+    <input id="search" type="search" placeholder="Search matcha drinks and sweets...">
+    <select id="sort"><option value="">Sort: Default</option><option value="asc">Price: Low to High</option><option value="desc">Price: High to Low</option><option value="rate">Top Rated</option></select>
+  </div>
+  <div class="chips" id="chips">
+    <button class="chip active" data-cat="all">All</button><button class="chip" data-cat="Drinks">Drinks</button><button class="chip" data-cat="Sweets">Sweets</button><button class="chip" data-cat="Powder">Powder</button><button class="chip" data-cat="Merchandise">Merchandise</button>
+  </div>
+  <div class="products" id="productGrid"></div>
+</section>
+
+<!-- REVIEWS -->
+<section data-page="reviews" hidden>
+  <h3 class="title">Customer Reviews</h3>
+  <div class="review-layout">
+    <div>
+      <div class="card rsum" id="rSummary"></div>
+      <div class="chips" id="rFilter">
+        <button class="chip active" data-rf="all">All</button><button class="chip" data-rf="5">5 stars</button><button class="chip" data-rf="4">4 stars</button><button class="chip" data-rf="3">3 stars and below</button><button class="chip" data-rf="photo">With photos</button>
+      </div>
+      <div id="reviewList"></div>
+    </div>
+    <form class="card" id="reviewForm">
+      <h4>Rate a Product</h4>
+      <p id="reviewLoginNote" class="muted" hidden>Log in to submit a review. <button type="button" class="text-btn" id="reviewLogin">Log in</button></p>
+      <p id="rateNote" class="muted"></p>
+      <select id="rvProduct" required></select>
+      <div class="stars" id="stars"></div>
+      <textarea id="rvText" rows="4" placeholder="Share your experience..." required></textarea>
+      <label class="file">Add a photo (optional)<input type="file" id="rvPhoto" accept="image/*"></label>
+      <button class="btn">Submit Review</button>
+    </form>
+  </div>
+</section>
+
+<!-- PURCHASE (CHECKOUT) -->
+<section data-page="checkout" hidden>
+  <h3 class="title">Purchase</h3>
+  <div id="coEmpty" class="card center" hidden><p>Your cart is empty. Add products first.</p><button class="btn" data-go="products">Browse Products</button></div>
+  <div id="coWrap">
+    <div class="steps" id="steps"><span class="done">1. Cart</span><span id="st2">2. Details</span><span id="st3">3. Payment</span><span id="st4">4. Place Order</span></div>
+    <form id="coForm" class="checkout">
+      <div class="card">
+        <div class="card-head"><h4>Customer Information</h4><button type="button" class="btn small ghost" id="useProfile">Use my profile details</button></div>
+        <input id="coName" placeholder="Full name" required>
+        <textarea id="coAddr" rows="3" placeholder="Complete address (house no., street, barangay, city, province, ZIP)" required></textarea>
+        <input id="coEmail" type="email" placeholder="Email" required>
+        <input id="coPhone" placeholder="Contact number (09XXXXXXXXX)" required>
+        <textarea id="coNote" rows="2" placeholder="Note to seller (optional)"></textarea>
+
+        <h4>Pickup or Delivery</h4>
+        <label class="opt"><input type="radio" name="fulfillment" value="delivery" checked> Home Delivery <b class="right" id="deliveryFee"></b></label>
+        <label class="opt"><input type="radio" name="fulfillment" value="pickup"> Pick Up <b class="right">Free</b></label>
+        <p id="deliveryHint" class="muted">Drinks and sweets are available in Davao City. Powder and merchandise deliver in 2–4 days.</p>
+
+        <h4>Preferred Payment</h4>
+        <label class="opt"><input type="radio" name="pay" value="cod" checked> Cash on Delivery</label>
+        <label class="opt"><input type="radio" name="pay" value="ewallet"> Payment Center / E-Wallet</label>
+        <div class="sub" id="sub-ewallet" hidden>
+          <div class="seg"><label><input type="radio" name="wallet" value="GCash" checked> GCash</label><label><input type="radio" name="wallet" value="Maya"> Maya</label><label><input type="radio" name="wallet" value="PayPal"> PayPal</label></div>
+          <input id="wName" placeholder="Account name">
+          <input id="walletNo" placeholder="GCash mobile number (09XXXXXXXXX)" inputmode="numeric">
+          <input id="walletPin" type="password" placeholder="MPIN (4 digits)" maxlength="4" inputmode="numeric" autocomplete="off">
+          <small class="muted">You will confirm this payment with a one-time password (OTP).</small>
         </div>
-      </div>
+        <label class="opt"><input type="radio" name="pay" value="bank"> Online Banking</label>
+        <div class="sub" id="sub-bank" hidden>
+          <select id="bankName"><option>UnionBank</option><option>BDO</option><option>BPI</option><option>Metrobank</option><option>Landbank</option><option>Security Bank</option></select>
+          <input id="bName" placeholder="Account name (as shown on your card)">
+          <input id="bankNo" placeholder="Account / card number (10 to 16 digits)" inputmode="numeric" maxlength="16">
+          <div class="two"><input id="bExp" placeholder="Expiry date (MM/YY)" maxlength="5" inputmode="numeric"><input id="bCvv" type="password" placeholder="CVV" maxlength="4" inputmode="numeric" autocomplete="off"></div>
+          <small class="muted">You will confirm this payment with a one-time password (OTP).</small>
+        </div>
 
-      <h2 class="title">A little matcha inspiration</h2>
-      <div class="facts">
-        <button class="flip"><span class="front"><small>Did you know?</small><b>How is matcha different from regular green tea?</b><i>Tap to reveal</i></span><span class="back">With matcha you drink the whole stone-ground tea leaf, not just the water it was steeped in.</span></button>
-        <button class="flip"><span class="front"><small>Did you know?</small><b>Why are matcha plants shaded before harvest?</b><i>Tap to reveal</i></span><span class="back">Weeks of shade boost chlorophyll and L-theanine, giving matcha its deep green color and smooth taste.</span></button>
-        <button class="flip"><span class="front"><small>Did you know?</small><b>Which compound gives matcha its calm focus?</b><i>Tap to reveal</i></span><span class="back">L-theanine is an amino acid that pairs with caffeine for steady energy.</span></button>
+        <h4>Voucher or Discount</h4>
+        <div class="seg"><label><input type="radio" name="promo" value="none" checked> None</label><label><input type="radio" name="promo" value="voucher"> Voucher</label><label><input type="radio" name="promo" value="discount"> Discount</label></div>
+        <select id="promoSel" hidden></select>
+        <p id="promoMsg" class="muted"></p>
       </div>
-
-      <h2 class="title">From our collection</h2>
-      <div class="gallery">
-        <figure><div class="ph"><img src="photo1.jpg" alt="Matcha drink" loading="lazy"></div><figcaption>Freshly whisked matcha drinks.</figcaption></figure>
-        <figure><div class="ph"><img src="photo2.jpg" alt="Matcha sweets" loading="lazy"></div><figcaption>Matcha sweets for every occasion.</figcaption></figure>
-        <figure><div class="ph"><img src="team.jfif" alt="Matcha Lavur team" loading="lazy"></div><figcaption>Thoughtfully prepared and packed.</figcaption></figure>
+      <div class="card summary">
+        <h4>Order Summary</h4>
+        <div id="coItems"></div>
+        <div class="row"><span>Subtotal</span><span id="sSub"></span></div>
+        <div class="row"><span>Shipping</span><span id="sShip"></span></div>
+        <div class="row"><span>Voucher / Discount</span><span id="sDisc"></span></div>
+        <div class="row total"><span>Total Amount</span><span id="sTotal"></span></div>
+        <button class="btn big">Place Order</button>
+        <p class="secure">Secure checkout. Your payment details are never saved.</p>
+        <p id="coErr" class="err"></p>
       </div>
-    </section>
+    </form>
+  </div>
+</section>
 
-    <section id="productsView" hidden>
-      <h1 class="title">Matcha Collection</h1>
-      <div class="toolbar">
-        <label class="sr-only" for="search">Search products</label>
-        <input id="search" type="search" placeholder="Search matcha drinks and sweets...">
-        <label class="sr-only" for="sort">Sort products</label>
-        <select id="sort">
-          <option value="">Sort: Default</option>
-          <option value="asc">Price: Low to High</option>
-          <option value="desc">Price: High to Low</option>
-          <option value="rate">Top Rated</option>
-        </select>
-      </div>
-      <div class="chips" id="chips" aria-label="Filter by category">
-        <button class="chip active" data-cat="all">All</button>
-        <button class="chip" data-cat="Drinks">Drinks</button>
-        <button class="chip" data-cat="Sweets">Sweets</button>
-        <button class="chip" data-cat="Powder">Powder</button>
-        <button class="chip" data-cat="Merchandise">Merchandise</button>
-      </div>
-      <div class="products" id="productGrid"></div>
-    </section>
+<!-- MY PURCHASE -->
+<section data-page="mypurchase" hidden>
+  <h3 class="title">My Purchase</h3>
+  <div class="stats" id="orderStats"></div>
+  <div class="toolbar"><input id="orderSearch" type="search" placeholder="Search by order number or product name"></div>
+  <div class="tabs scroll" id="orderTabs"></div>
+  <div id="orderList"></div>
+</section>
 
-    <section id="cartView" hidden>
-      <h1 class="title">Your Cart</h1>
-      <p class="muted">Cart selections stay in this page session only. No account or personal details are requested.</p>
-      <div id="cartBox"></div>
-    </section>
-  </main>
+<!-- ADMIN -->
+<section data-page="admin" hidden>
+  <h3 class="title">Owner Dashboard</h3>
+  <div class="card owner-profile">
+    <span class="av big" id="ownerAvatar"></span>
+    <div><small class="muted">Store owner</small><b id="ownerName"></b><span id="ownerEmail" class="muted"></span></div>
+    <button class="btn small ghost" id="ownerEditProfile" type="button">Edit Profile</button>
+  </div>
+  <h4 class="sec-h">Sales Overview</h4>
+  <div class="stats" id="ownerStats"></div>
+  <h4 class="sec-h">Sales by Product</h4>
+  <div class="card" id="ownerSales"></div>
+  <h4 class="sec-h">Orders and Refund Requests</h4>
+  <div id="adminOrders"></div>
+  <h4 class="sec-h">Available Stock</h4>
+  <div id="adminStock" class="admin-stock"></div>
+  <h4 class="sec-h">Customer Messages</h4>
+  <div class="card admin-chat">
+    <label for="adminCustomer">Customer</label>
+    <select id="adminCustomer"></select>
+    <div id="adminChatBody" class="admin-chat-body"></div>
+    <form id="adminChatForm">
+      <input id="adminChatInput" placeholder="Reply to customer..." autocomplete="off">
+      <button class="btn">Send Reply</button>
+    </form>
+  </div>
+</section>
 
-  <footer><b>MATCHA LAVUR</b> | Matcha drinks, sweets, and tea essentials</footer>
-  <div id="toast" role="status" aria-live="polite"></div>
-  <script src="script.js"></script>
+<!-- CART -->
+<section data-page="cart" hidden>
+  <h3 class="title">My Cart</h3>
+  <div id="cartBox"></div>
+</section>
+
+<!-- MESSAGE -->
+<section data-page="message" hidden>
+  <h3 class="title">Message the Seller</h3>
+  <div class="chat card">
+    <div class="chat-head">
+      <span class="ph avatar"><img src="message.jpeg" alt=""><span></span></span>
+      <div class="chat-who"><b>Matcha Lavur Seller</b><small id="sellerStatus"></small></div>
+      <button class="btn small ghost" id="clearChat" type="button">Clear chat</button>
+    </div>
+    <div class="chat-info">Store hours: Mon to Sat, 9AM to 6PM | Usually replies within minutes</div>
+    <div id="chatBody"></div>
+    <div class="quick" id="quick"><button>Is my order shipped?</button><button>Do you accept bulk orders?</button><button>Any available vouchers?</button></div>
+    <form id="chatForm"><button class="btn small ghost" id="shareOrder" type="button">Share order</button><input id="chatInput" placeholder="Type a message..." autocomplete="off"><button class="btn">Send</button></form>
+  </div>
+</section>
+
+<!-- SUPPORT -->
+<section data-page="support" hidden>
+  <h3 class="title">Support</h3>
+  <div class="support">
+    <div>
+      <h4>Help Center</h4>
+      <div id="faq"></div>
+    </div>
+    <form class="card" id="csForm">
+      <h4>Customer Service</h4>
+      <p class="muted">Email: support@matchalavur.com<br>Phone: 09XX XXX XXXX<br>Mon to Sat, 9AM to 6PM</p>
+      <select id="csTopic"><option>Order issue</option><option>Payment problem</option><option>Return / Refund</option><option>Account help</option><option>Other</option></select>
+      <textarea id="csMsg" rows="4" placeholder="Describe your concern..." required></textarea>
+      <button class="btn">Submit Ticket</button>
+      <p id="csDone" class="ok"></p>
+    </form>
+  </div>
+</section>
+</main>
+
+<footer><b>MATCHA LAVUR</b> | B2C Online Matcha Shop | CP 308 Web System and Technologies</footer>
+</div>
+
+<!-- ========== MODALS ========== -->
+<div class="modal" id="profileModal" hidden>
+  <form class="modal-card" id="profileForm">
+    <h4>My Profile</h4>
+    <div class="pf-photo"><span class="av big" id="pfAv"></span><div><label class="file">Upload profile photo<input type="file" id="pfPhoto" accept="image/*"></label><button type="button" class="btn small ghost" id="pfRemove">Remove photo</button></div></div>
+    <label for="pfName">Full name</label><input id="pfName" required>
+    <label for="pfEmail">Email</label><input id="pfEmail" readonly>
+    <label for="pfPhone">Contact number</label><input id="pfPhone" placeholder="09XXXXXXXXX">
+    <label for="pfAddr">Complete address</label><textarea id="pfAddr" rows="2"></textarea>
+    <label for="pfBio">About me</label><textarea id="pfBio" rows="2" maxlength="120" placeholder="A short bio (optional)"></textarea>
+    <div class="modal-actions"><button type="button" class="btn ghost" data-close="profileModal">Cancel</button><button class="btn">Save Profile</button></div>
+  </form>
+</div>
+
+<div class="modal" id="socModal" hidden>
+  <form class="modal-card" id="socForm">
+    <h4 id="socTitle">Continue</h4>
+    <p class="muted">Enter the details of your account to continue.</p>
+    <input id="socName" placeholder="Full name" required>
+    <input id="socEmail" type="email" placeholder="Email address" required>
+    <div class="modal-actions"><button type="button" class="btn ghost" data-close="socModal">Cancel</button><button class="btn">Continue</button></div>
+  </form>
+</div>
+
+<div class="modal" id="otpModal" hidden>
+  <form class="modal-card" id="otpForm">
+    <h4>Confirm Payment</h4>
+    <p class="muted">Amount to pay: <b id="otpAmt"></b><br>Via: <span id="otpTo"></span></p>
+    <p class="muted">Enter the 6-digit one-time password (OTP) sent to your registered number. Demo OTP: <b>123456</b></p>
+    <input id="otpInput" placeholder="6-digit OTP" maxlength="6" inputmode="numeric" autocomplete="off">
+    <p id="otpErr" class="err"></p>
+    <div class="modal-actions"><button type="button" class="btn ghost" id="otpCancel">Pay Later</button><button class="btn">Confirm Payment</button></div>
+  </form>
+</div>
+<div class="modal" id="imgModal" hidden>
+  <div class="modal-card img-card">
+    <div id="imgFull" class="img-full"></div>
+    <h4 id="imgName"></h4>
+    <p id="imgDesc" class="muted"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" data-close="imgModal">Close</button>
+      <button type="button" class="btn" id="imgAdd">Add to Cart</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="script.js"></script>
 </body>
 </html>
