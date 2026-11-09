@@ -282,6 +282,18 @@ function showAuth(w) {
   $('.auth-card .tabs').hidden = w === 'reset'; authMsg('');
 }
 function authMsg(t, ok) { const m = $('#authMsg'); m.textContent = t; m.className = ok ? 'ok' : 'err'; }
+function authErrorMessage(error, flow) {
+  const message = error.message || 'Authentication failed. Please try again.';
+  if (error.code === 'over_email_send_rate_limit' || /email rate limit exceeded/i.test(message)) {
+    return flow === 'signup'
+      ? 'Sign-up email delivery is temporarily rate-limited. Please try again later. The store owner needs to configure custom email delivery in Supabase for customer sign-up.'
+      : 'Email delivery is temporarily rate-limited. Please try again later or contact the store owner.';
+  }
+  if (/email not confirmed/i.test(message)) {
+    return 'This email is not confirmed yet. Check your inbox for the confirmation link, or try again after the store email service is configured.';
+  }
+  return message;
+}
 $$('[data-auth]').forEach(b => b.onclick = () => showAuth(b.dataset.auth));
 $('#forgotLink').onclick = e => { e.preventDefault(); showAuth('reset'); };
 $('#backLogin').onclick = e => { e.preventDefault(); showAuth('login'); };
@@ -389,7 +401,7 @@ $('#signupForm').onsubmit = async e => {
     password: $('#suPass').value,
     options: {data: {full_name: $('#suName').value.trim()}}
   });
-  if (error) return authMsg(error.message);
+  if (error) return authMsg(authErrorMessage(error, 'signup'));
   if (data.session) await startSession(data.user);
   else authMsg('Account created. Confirm your email, then log in.', true);
 };
@@ -398,7 +410,7 @@ $('#loginForm').onsubmit = async e => {
   const {data, error} = await supabaseClient.auth.signInWithPassword({
     email: $('#liEmail').value.trim().toLowerCase(), password: $('#liPass').value
   });
-  if (error) return authMsg(error.message);
+  if (error) return authMsg(authErrorMessage(error, 'login'));
   if (data.user) await startSession(data.user);
 };
 $('#resetForm').onsubmit = async e => {
@@ -415,7 +427,7 @@ $('#resetForm').onsubmit = async e => {
   const {error} = await supabaseClient.auth.resetPasswordForEmail($('#rsEmail').value.trim().toLowerCase(), {
     redirectTo: window.location.origin
   });
-  if (error) return authMsg(error.message);
+  if (error) return authMsg(authErrorMessage(error, 'reset'));
   authMsg('Password reset instructions were sent if this email has an account.', true);
 };
 $('#socBtns').onclick = async e => {
