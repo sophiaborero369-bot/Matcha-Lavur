@@ -295,6 +295,15 @@ function authErrorMessage(error, flow) {
   return message;
 }
 $$('[data-auth]').forEach(b => b.onclick = () => showAuth(b.dataset.auth));
+$('#auth').addEventListener('click', e => {
+  const button = e.target.closest('[data-toggle-password]');
+  if (!button) return;
+  const input = document.getElementById(button.getAttribute('aria-controls'));
+  const isVisible = input.type === 'password';
+  input.type = isVisible ? 'text' : 'password';
+  button.setAttribute('aria-pressed', String(isVisible));
+  button.setAttribute('aria-label', isVisible ? 'Hide password' : 'Show password');
+});
 $('#forgotLink').onclick = e => { e.preventDefault(); showAuth('reset'); };
 $('#backLogin').onclick = e => { e.preventDefault(); showAuth('login'); };
 function showDatabaseError(error) {
@@ -497,6 +506,36 @@ document.addEventListener('click', e => { const t = e.target.closest('[data-go]'
 $('#voucherCards').innerHTML = [...VOUCHERS, ...DISCOUNTS].map(v =>
   `<div class="vcard"><b>${v.label}</b><small>${v.min ? 'Min. spend ' + peso(v.min) : 'No minimum spend'}</small><br>Code: <code>${v.code}</code></div>`).join('');
 $$('.flip').forEach(f => f.onclick = () => f.classList.toggle('on'));
+$('#deliveryOptionsToggle').onclick = () => {
+  const options = $('#deliveryOptions');
+  const isExpanded = $('#deliveryOptionsToggle').getAttribute('aria-expanded') === 'true';
+  $('#deliveryOptionsToggle').setAttribute('aria-expanded', String(!isExpanded));
+  options.hidden = isExpanded;
+};
+$('#deliveryOptions').onclick = e => {
+  const zoneButton = e.target.closest('[data-delivery-zone]');
+  if (zoneButton) {
+    const zone = zoneButton.dataset.deliveryZone;
+    const isDavao = zone === 'davao';
+    const categories = isDavao ? ['Drinks', 'Sweets', 'Powder', 'Merchandise'] : ['Powder', 'Merchandise'];
+    $$('#deliveryOptions [data-delivery-zone]').forEach(button => {
+      button.setAttribute('aria-pressed', String(button === zoneButton));
+    });
+    $('#deliveryAvailability').innerHTML = `
+      <p>${isDavao
+        ? 'Davao City delivery: drinks and sweets arrive in minutes; powder and merchandise take 2–4 days.'
+        : 'Outside Davao City: only powder and merchandise are available for delivery (2–4 days). Drinks and sweets are not available for delivery to this area.'}</p>
+      <div class="delivery-categories" aria-label="Shop available product categories">
+        ${categories.map(category => `<button type="button" class="delivery-category" data-delivery-category="${category}">Shop ${category}</button>`).join('')}
+      </div>`;
+    return;
+  }
+  const categoryButton = e.target.closest('[data-delivery-category]');
+  if (!categoryButton) return;
+  cat = categoryButton.dataset.deliveryCategory;
+  $$('#chips .chip').forEach(button => button.classList.toggle('active', button.dataset.cat === cat));
+  go('products');
+};
 
 /* ---------- PRODUCTS ---------- */
 const stars = n => '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
