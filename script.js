@@ -56,7 +56,7 @@ const SHIP = {std: 49, exp: 99};
 const OWNER_USER_ID = '5c838b4c-867d-4a53-8fa7-bb0ee2c72106';
 const FAQ = [
   ['How do I place an order?', 'Add items to your cart, open Purchase, fill in your details, choose delivery or pickup, and press Place Order.'],
-  ['What payment methods are accepted?', 'Cash on Delivery or cash on pickup. Online payments are not currently available.'],
+  ['What payment methods are accepted?', 'Cash on delivery, cash on pickup, or manual transfer through GCash, Maya, or online banking. For a manual transfer, message the seller for confirmed receiving details first. The website does not process or verify payments automatically.'],
   ['How do vouchers and discounts work?', 'On the Purchase page choose either a voucher or a discount. Only one can be used per order and each has a minimum spend.'],
   ['Can I cancel my order?', 'Yes, while it is in To Ship. Go to My Purchase and press Cancel Order.'],
   ['How do I return or refund an item?', 'After an order is Completed, open My Purchase > Completed and press Request Return/Refund.'],
@@ -64,9 +64,9 @@ const FAQ = [
 ];
 const SEED_REVIEWS = [
   {id:'s1', name:'Angela R.', pid:3, stars:5, text:'The strawberry matcha is perfect. Not too sweet and the matcha is rich!', img:'images/review1.jpg', date:'Nov 2, 2026', help:12},
-  {id:'s2', name:'Marco D.', pid:12, stars:5, text:'Best matcha basque cheesecake I have tried. Arrived cold and intact.', img:'images/review2.jpg', date:'Nov 1, 2026', help:9},
-  {id:'s3', name:'Kyla S.', pid:9, stars:4, text:'Mochi was so soft. Would love more flavors next time.', img:'images/review3.jpg', date:'Oct 30, 2026', help:4},
-  {id:'s4', name:'Paolo T.', pid:1, stars:5, text:'My daily iced latte now. Smooth and not bitter at all.', img:'', date:'Oct 28, 2026', help:6},
+  {id:'s2', name:'Marco D.', pid:15, stars:5, text:'Best matcha basque cheesecake I have tried. Arrived cold and intact.', img:'images/review2.jpg', date:'Nov 1, 2026', help:9},
+  {id:'s3', name:'Kyla S.', pid:22, stars:4, text:'Mochi was so soft. Would love more flavors next time.', img:'images/review3.jpg', date:'Oct 30, 2026', help:4},
+  {id:'s4', name:'Paolo T.', pid:5, stars:5, text:'My daily iced latte now. Smooth and not bitter at all.', img:'', date:'Oct 28, 2026', help:6},
   {id:'s5', name:'Jen L.', pid:6, stars:3, text:'Tasty frappe but it melted a bit on the way. Still good.', img:'', date:'Oct 27, 2026', help:2}
 ];
 const P = id => PRODUCTS.find(p => p.id === id);
@@ -632,6 +632,19 @@ function calc() {
 function renderCheckout() {
   const empty = !me.cart.length; $('#coEmpty').hidden = !empty; $('#coWrap').hidden = empty; if (empty) return;
   const delivery = deliveryDetails();
+  const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+  const cashDelivery = $('#paymentOptions [data-payment-fulfillment="delivery"]');
+  const cashPickup = $('#paymentOptions [data-payment-fulfillment="pickup"]');
+  cashDelivery.hidden = delivery.pickup;
+  cashPickup.hidden = !delivery.pickup;
+  if ((delivery.pickup && paymentMethod === 'Cash on Delivery') || (!delivery.pickup && paymentMethod === 'Cash on Pickup')) {
+    (delivery.pickup ? cashPickup : cashDelivery).querySelector('input').checked = true;
+  }
+  const selectedPayment = document.querySelector('input[name="payment_method"]:checked')?.value;
+  const manualPayment = ['GCash', 'Maya', 'Online Banking'].includes(selectedPayment);
+  $('#manualPaymentFields').hidden = !manualPayment;
+  $('#paymentPayer').required = manualPayment;
+  $('#paymentReference').required = manualPayment;
   $('#deliveryFee').textContent = delivery.pickup ? 'Free' : peso(delivery.fee);
   $('#deliveryHint').textContent = delivery.isDavao
     ? 'Davao City orders: drinks and sweets arrive in minutes; powder and merchandise deliver in 2–4 days.'
@@ -664,6 +677,17 @@ $('#coForm').onsubmit = async e => {
   const delivery = deliveryDetails();
   if (!delivery.isDavao && delivery.hasFreshItems) return err.textContent = 'Drinks and sweets are only available for Davao City customers. Remove those items to continue.';
   if (!/^09\d{9}$/.test($('#coPhone').value.trim())) return err.textContent = 'Enter a valid 11-digit contact number starting with 09.';
+  const paymentMethod = val('payment_method');
+  const manualPayment = ['GCash', 'Maya', 'Online Banking'].includes(paymentMethod);
+  const paymentPayer = $('#paymentPayer').value.trim();
+  const paymentReference = $('#paymentReference').value.trim();
+  if (manualPayment && (!paymentPayer || !paymentReference)) {
+    return err.textContent = 'Enter the payer name and transaction reference for your manual payment.';
+  }
+  const orderNote = [
+    $('#coNote').value.trim(),
+    manualPayment ? `Manual payment: ${paymentMethod} | Payer: ${paymentPayer} | Reference: ${paymentReference}` : ''
+  ].filter(Boolean).join('\n');
   const totals = calc();
   const button = $('#coForm').querySelector('button[type="submit"], button:not([type])');
   button.disabled = true;
@@ -671,9 +695,9 @@ $('#coForm').onsubmit = async e => {
     p_customer_name: $('#coName').value.trim(),
     p_phone: $('#coPhone').value.trim(),
     p_address: $('#coAddr').value.trim(),
-    p_note: $('#coNote').value.trim(),
+    p_note: orderNote,
     p_fulfillment: delivery.pickup ? 'Pick Up' : 'Delivery',
-    p_payment_method: delivery.pickup ? 'Cash on Pickup' : 'Cash on Delivery',
+    p_payment_method: paymentMethod,
     p_promo_code: totals.code,
     p_promo_mode: val('promo'),
     p_items: me.cart.map(item => ({product_id: item.id, quantity: item.qty}))
@@ -697,6 +721,7 @@ $('#coForm').onsubmit = async e => {
   try { await loadStock(); } catch (loadError) { showDatabaseError(loadError); }
   updateCount();
   $('#coNote').value = '';
+  $('#paymentPayer').value = ''; $('#paymentReference').value = '';
   toast('Order placed!');
   orderTab = 'To Ship';
   go('mypurchase');
@@ -772,12 +797,17 @@ async function renderReviews() {
     help: Number((countsResult.data || []).find(vote => vote.review_id === review.id)?.vote_count || 0)
   }));
   reviewVoteCounts = Object.fromEntries(userReviews.map(review => [review.id, review.help]));
-  const opts = rateOrder ? rateOrder.items.map(i => P(i.id)) : PRODUCTS, all = allReviews();
+  const opts = rateOrder ? rateOrder.items.map(i => P(i.id)).filter(Boolean) : PRODUCTS, all = allReviews();
   $('#reviewLoginNote').hidden = !!me;
-  $('#reviewForm').querySelectorAll('select, textarea, input, button[type="submit"]').forEach(el => { el.disabled = !me; });
-  $('#reviewForm > button').disabled = !me;
+  const canReview = !!me && !!rateOrder;
+  $('#reviewForm').querySelectorAll('select, textarea, input, button[type="submit"]').forEach(el => { el.disabled = !canReview; });
+  $('#reviewForm > button').disabled = !canReview;
   $('#rvProduct').innerHTML = opts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-  $('#rateNote').textContent = rateOrder ? `Rating order #${rateOrder.id}` : 'Choose a product and tell us what you think.';
+  $('#rateNote').textContent = !me
+    ? 'Sign in and rate an item from a completed order.'
+    : rateOrder
+      ? `Rating order #${rateOrder.id}. Choose an item from this order.`
+      : 'To keep feedback matched to real purchases, open a completed order in My Purchase and choose Rate.';
   $('#stars').innerHTML = [1, 2, 3, 4, 5].map(n => `<button type="button" class="${n <= rating ? 'on' : ''}" data-s="${n}" ${me ? '' : 'disabled'}>★</button>`).join('');
   const avg = all.reduce((n, r) => n + r.stars, 0) / all.length;
   $('#rSummary').innerHTML = `<div><span class="big">${avg.toFixed(1)}</span><span class="star">${stars(avg)}</span><small class="muted">${all.length} reviews</small></div>
@@ -798,7 +828,9 @@ $('#reviewList').onclick = async e => {
 };
 $('#stars').onclick = e => { const s = e.target.closest('[data-s]'); if (s) { rating = +s.dataset.s; renderReviews(); } };
 $('#reviewForm').onsubmit = async e => {
-  e.preventDefault(); if (!requireLogin('reviews')) return; if (!rating) return toast('Please choose a star rating');
+  e.preventDefault(); if (!requireLogin('reviews')) return;
+  if (!rateOrder) return toast('Open a completed order in My Purchase and choose Rate first.');
+  if (!rating) return toast('Please choose a star rating');
   const f = $('#rvPhoto').files[0];
   let photoUrl = '';
   if (f) {
@@ -887,18 +919,23 @@ async function renderAdmin() {
     <div class="stat"><small>Active orders</small><b>${pending}</b></div>
     <div class="stat"><small>Refunds to review</small><b>${refunds}</b></div>`;
   $('#ownerSales').innerHTML = bestSellers.length ? bestSellers.map(item => `<div class="sales-row"><span>${escapeHtml(item.name)} <small class="muted">(${item.quantity} sold)</small></span><b>${peso(item.revenue)}</b></div>`).join('') : '<p class="muted">Sales will appear here after customers place orders.</p>';
-  $('#adminOrders').innerHTML = allOrders.length ? allOrders.map(({email, user, order}) => `
+  $('#adminOrders').innerHTML = allOrders.length ? allOrders.map(({email, user, order}) => {
+    const manualPayment = ['GCash', 'Maya', 'Online Banking'].includes(order.method);
+    return `
     <div class="card order">
       <div class="order-h"><b>Order #${escapeHtml(order.id)} · ${escapeHtml(user.full_name)}</b><span>${escapeHtml(email)}</span><span class="status">${escapeHtml(order.status)}</span></div>
       <p class="muted">${order.items.map(i => `${escapeHtml(P(i.id).name)} × ${i.qty}`).join(', ')} | ${peso(order.total)}</p>
       <p class="muted">${escapeHtml(order.delivery || '')} ${escapeHtml(order.fulfillment || '')} | ${escapeHtml(order.addr || '')}</p>
+      <p class="muted"><b>Payment:</b> ${escapeHtml(order.method)}${manualPayment ? ' — manually verify payment before fulfillment' : ''}</p>
+      ${order.note ? `<p class="muted">Order note: ${escapeHtml(order.note)}</p>` : ''}
       <div class="actions">
         <select data-admin-status="${escapeHtml(order.id)}">${['To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive', 'Completed', 'Return/Refund', 'Cancelled'].map(s => `<option ${order.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
         <button class="btn small" data-admin-update="${escapeHtml(order.id)}" data-db-id="${order.dbId}">Update Order</button>
         ${order.status === 'Return/Refund' && !order.refundDecision ? `<button class="btn small" data-refund="Approved" data-db-id="${order.dbId}">Approve Refund</button><button class="btn small danger" data-refund="Declined" data-db-id="${order.dbId}">Decline Refund</button>` : ''}
         ${order.refundDecision ? `<span class="muted">Refund ${escapeHtml(order.refundDecision.toLowerCase())}</span>` : ''}
       </div>
-    </div>`).join('') : '<div class="card empty">No orders yet.</div>';
+    </div>`;
+  }).join('') : '<div class="card empty">No orders yet.</div>';
   $('#adminStock').innerHTML = PRODUCTS.map(p => `<div class="stock-row"><b>${escapeHtml(p.name)}</b><input type="number" min="0" step="1" value="${Math.max(0, Number(stock[p.id]) || 0)}" data-stock="${p.id}" aria-label="Available stock for ${escapeHtml(p.name)}"><button class="btn small" data-stock-save="${p.id}">Save</button></div>`).join('');
   if (!ownerCustomers.some(customer => customer.id === adminCustomer)) adminCustomer = ownerCustomers[0]?.id || '';
   $('#adminCustomer').innerHTML = ownerCustomers.map(customer => `<option value="${customer.id}" ${customer.id === adminCustomer ? 'selected' : ''}>${escapeHtml(customer.full_name)} (${escapeHtml(customer.email)})</option>`).join('');

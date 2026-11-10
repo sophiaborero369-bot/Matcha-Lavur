@@ -281,9 +281,12 @@ begin
   if trim(coalesce(p_phone, '')) !~ '^09[0-9]{9}$' then raise exception 'Enter a valid contact number.'; end if;
   if length(trim(coalesce(p_address, ''))) < 5 then raise exception 'Enter your complete address.'; end if;
   if p_fulfillment not in ('Pick Up', 'Delivery') then raise exception 'Choose pickup or delivery.'; end if;
-  if (p_fulfillment = 'Pick Up' and v_payment <> 'Cash on Pickup')
-     or (p_fulfillment = 'Delivery' and v_payment <> 'Cash on Delivery') then
-    raise exception 'Choose cash on pickup or cash on delivery to match your fulfillment selection.';
+  if v_payment not in ('Cash on Pickup', 'Cash on Delivery', 'GCash', 'Maya', 'Online Banking') then
+    raise exception 'Choose a supported payment method.';
+  end if;
+  if (p_fulfillment = 'Pick Up' and v_payment = 'Cash on Delivery')
+     or (p_fulfillment = 'Delivery' and v_payment = 'Cash on Pickup') then
+    raise exception 'Choose a cash payment method that matches your pickup or delivery selection.';
   end if;
   if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then raise exception 'Your cart is empty.'; end if;
 
@@ -458,17 +461,15 @@ begin
   end if;
   select full_name into v_customer_name from public.profiles where id = v_customer_id;
 
-  if p_order_id is not null then
-    if not exists (
-      select 1 from public.orders o
-      join public.order_items i on i.order_id = o.id
-      where o.id = p_order_id and o.customer_id = v_customer_id
-        and o.status = 'Completed' and i.product_id = p_product_id and not o.rated
-    ) then
-      raise exception 'A completed order containing this product is required to rate it.';
-    end if;
-    update public.orders set rated = true where id = p_order_id;
+  if p_order_id is null or not exists (
+    select 1 from public.orders o
+    join public.order_items i on i.order_id = o.id
+    where o.id = p_order_id and o.customer_id = v_customer_id
+      and o.status = 'Completed' and i.product_id = p_product_id and not o.rated
+  ) then
+    raise exception 'A completed order containing this product is required to rate it.';
   end if;
+  update public.orders set rated = true where id = p_order_id;
 
   insert into public.reviews (customer_id, customer_name, product_id, stars, review_text, photo_url)
   values (v_customer_id, coalesce(v_customer_name, ''), p_product_id, p_stars, trim(p_review_text), coalesce(p_photo_url, ''))

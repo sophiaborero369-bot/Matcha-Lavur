@@ -28,4 +28,6 @@ Then open `http://localhost:8000`. The local origin must be allowed in Supabase 
 
 Customers can browse without an account; sign-in is required to add to cart, place orders, submit reviews, or message the owner. Drinks and sweets are restricted to Davao City. Powder and merchandise can be delivered outside Davao City (2–4 days). Pickup is available.
 
-Checkout currently supports cash on delivery or cash on pickup only. No online payment provider is connected, and the website does not collect card, wallet, PIN, or OTP details.
+Checkout supports cash on delivery, cash on pickup, and manual transfers through GCash, Maya, or online banking. No payment gateway or merchant receiving accounts are configured: customers must message the seller for confirmed receiving details before transferring. For manual transfers, checkout records the payer name and transaction reference in the private order note for seller verification. The website never requests card details, wallet or bank passwords, PINs, or OTPs.
+
+Before deploying checkout changes to an existing Supabase project, run [`supabase/payment-options.sql`](./supabase/payment-options.sql) in the Supabase SQL Editor. For a new project, the updated [`supabase/schema.sql`](./supabase/schema.sql) already includes the supported manual payment methods. Also run [`supabase/review-order-link.sql`](./supabase/review-order-link.sql) to require each review to come from a completed order and match one of its products.

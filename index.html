@@ -253,7 +253,22 @@
         <p id="deliveryHint" class="muted">Drinks and sweets are available in Davao City. Powder and merchandise deliver in 2–4 days.</p>
 
         <h4>Preferred Payment</h4>
-        <p class="muted">Cash on delivery or cash on pickup. Online payments are not currently available.</p>
+        <div id="paymentOptions">
+          <label class="opt" data-payment-fulfillment="delivery"><input type="radio" name="payment_method" value="Cash on Delivery" checked> Cash on Delivery</label>
+          <label class="opt" data-payment-fulfillment="pickup" hidden><input type="radio" name="payment_method" value="Cash on Pickup"> Cash on Pickup</label>
+          <label class="opt"><input type="radio" name="payment_method" value="GCash"> GCash (manual transfer)</label>
+          <label class="opt"><input type="radio" name="payment_method" value="Maya"> Maya (manual transfer)</label>
+          <label class="opt"><input type="radio" name="payment_method" value="Online Banking"> Online banking (manual transfer)</label>
+        </div>
+        <div id="manualPaymentFields" class="payment-details" hidden>
+          <p class="payment-notice">Manual payment only—not processed by this website. Message the seller for the confirmed receiving account before sending money. The seller must verify your reference before preparing or shipping your order.</p>
+          <button type="button" class="btn small ghost" data-go="message">Message the Seller for Payment Details</button>
+          <label for="paymentPayer">Name shown on your payment</label>
+          <input id="paymentPayer" maxlength="80" autocomplete="name" placeholder="Payer name">
+          <label for="paymentReference">Transaction or reference number</label>
+          <input id="paymentReference" maxlength="120" autocomplete="off" placeholder="Enter the transfer reference">
+          <p class="muted payment-safety">Do not enter a password, card number, CVV, PIN, or OTP.</p>
+        </div>
 
         <h4>Voucher or Discount</h4>
         <div class="seg"><label><input type="radio" name="promo" value="none" checked> None</label><label><input type="radio" name="promo" value="voucher"> Voucher</label><label><input type="radio" name="promo" value="discount"> Discount</label></div>
@@ -268,7 +283,7 @@
         <div class="row"><span>Voucher / Discount</span><span id="sDisc"></span></div>
         <div class="row total"><span>Total Amount</span><span id="sTotal"></span></div>
         <button class="btn big">Place Order</button>
-        <p class="secure">No online payment details are collected.</p>
+        <p class="secure">Manual transfers are not processed by this website. The seller verifies them separately.</p>
         <p id="coErr" class="err"></p>
       </div>
     </form>
