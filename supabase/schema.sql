@@ -281,7 +281,7 @@ begin
   if trim(coalesce(p_phone, '')) !~ '^09[0-9]{9}$' then raise exception 'Enter a valid contact number.'; end if;
   if length(trim(coalesce(p_address, ''))) < 5 then raise exception 'Enter your complete address.'; end if;
   if p_fulfillment not in ('Pick Up', 'Delivery') then raise exception 'Choose pickup or delivery.'; end if;
-  if v_payment not in ('Cash on Pickup', 'Cash on Delivery', 'GCash', 'Maya', 'Online Banking') then
+  if v_payment not in ('Cash on Pickup', 'Cash on Delivery', 'GCash', 'Maya', 'PayPal', 'Online Banking', 'BDO Online Banking', 'Other Online Banking', 'Credit/Debit Card (Demo)') then
     raise exception 'Choose a supported payment method.';
   end if;
   if (p_fulfillment = 'Pick Up' and v_payment = 'Cash on Delivery')

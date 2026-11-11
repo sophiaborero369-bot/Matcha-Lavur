@@ -53,10 +53,11 @@ const DISCOUNTS = [
   {code:'MATCHA20', label:'20% off', type:'pct', val:20, min:1000}
 ];
 const SHIP = {std: 49, exp: 99};
+const DEMO_PAYMENT_METHODS = ['GCash', 'Maya', 'PayPal', 'Online Banking', 'BDO Online Banking', 'Other Online Banking', 'Credit/Debit Card (Demo)'];
 const OWNER_USER_ID = '5c838b4c-867d-4a53-8fa7-bb0ee2c72106';
 const FAQ = [
   ['How do I place an order?', 'Add items to your cart, open Purchase, fill in your details, choose delivery or pickup, and press Place Order.'],
-  ['What payment methods are accepted?', 'Cash on delivery, cash on pickup, or manual transfer through GCash, Maya, or online banking. For a manual transfer, message the seller for confirmed receiving details first. The website does not process or verify payments automatically.'],
+  ['What payment methods are accepted?', 'Cash on delivery, cash on pickup, or demo e-wallet, online banking, and card options. Online payment details are test-only and no real payment is processed.'],
   ['How do vouchers and discounts work?', 'On the Purchase page choose either a voucher or a discount. Only one can be used per order and each has a minimum spend.'],
   ['Can I cancel my order?', 'Yes, while it is in To Ship. Go to My Purchase and press Cancel Order.'],
   ['How do I return or refund an item?', 'After an order is Completed, open My Purchase > Completed and press Request Return/Refund.'],
@@ -629,6 +630,17 @@ function calc() {
   disc = Math.min(disc, sub + ship);
   return {sub, ship, disc, code, msg, total: sub + ship - disc};
 }
+function checkoutPayment() {
+  const choice = val('payment_method');
+  if (choice === 'E-wallet') return {method: $('#walletProvider').value, demo: 'wallet', bankName: ''};
+  if (choice === 'Online Banking') {
+    const bank = $('#bankProvider').value;
+    const bankName = bank === 'Other' ? $('#otherBankName').value.trim() : '';
+    return {method: bank === 'BDO' ? 'BDO Online Banking' : 'Other Online Banking', demo: 'bank', bankName};
+  }
+  if (choice === 'Credit/Debit Card (Demo)') return {method: choice, demo: 'card', bankName: ''};
+  return {method: choice, demo: '', bankName: ''};
+}
 function renderCheckout() {
   const empty = !me.cart.length; $('#coEmpty').hidden = !empty; $('#coWrap').hidden = empty; if (empty) return;
   const delivery = deliveryDetails();
@@ -640,11 +652,29 @@ function renderCheckout() {
   if ((delivery.pickup && paymentMethod === 'Cash on Delivery') || (!delivery.pickup && paymentMethod === 'Cash on Pickup')) {
     (delivery.pickup ? cashPickup : cashDelivery).querySelector('input').checked = true;
   }
-  const selectedPayment = document.querySelector('input[name="payment_method"]:checked')?.value;
-  const manualPayment = ['GCash', 'Maya', 'Online Banking'].includes(selectedPayment);
-  $('#manualPaymentFields').hidden = !manualPayment;
-  $('#paymentPayer').required = manualPayment;
-  $('#paymentReference').required = manualPayment;
+  const selectedPayment = val('payment_method');
+  const payment = checkoutPayment();
+  const isWallet = payment.demo === 'wallet';
+  const isBank = payment.demo === 'bank';
+  const isCard = payment.demo === 'card';
+  $('#walletOptions').hidden = selectedPayment !== 'E-wallet';
+  $('#bankOptions').hidden = selectedPayment !== 'Online Banking';
+  const otherBank = selectedPayment === 'Online Banking' && $('#bankProvider').value === 'Other';
+  $('#otherBankField').hidden = !otherBank;
+  $('#otherBankName').required = otherBank;
+  $('#demoPaymentFields').hidden = !payment.demo;
+  $('#walletDemoFields').hidden = !isWallet;
+  $('#bankDemoFields').hidden = !isBank;
+  $('#cardDemoFields').hidden = !isCard;
+  $('#walletDemoName').required = isWallet;
+  $('#walletDemoAccount').required = isWallet;
+  $('#bankDemoName').required = isBank;
+  $('#bankDemoAccount').required = isBank;
+  $('#cardDemoName').required = isCard;
+  $('#cardDemoNumber').required = isCard;
+  $('#cardDemoExpiry').required = isCard;
+  $('#cardDemoCvv').required = isCard;
+  $('#coForm button[type="submit"], #coForm button:not([type])').textContent = payment.demo ? 'Simulate Payment & Place Order' : 'Place Order';
   $('#deliveryFee').textContent = delivery.pickup ? 'Free' : peso(delivery.fee);
   $('#deliveryHint').textContent = delivery.isDavao
     ? 'Davao City orders: drinks and sweets arrive in minutes; powder and merchandise deliver in 2–4 days.'
@@ -677,16 +707,24 @@ $('#coForm').onsubmit = async e => {
   const delivery = deliveryDetails();
   if (!delivery.isDavao && delivery.hasFreshItems) return err.textContent = 'Drinks and sweets are only available for Davao City customers. Remove those items to continue.';
   if (!/^09\d{9}$/.test($('#coPhone').value.trim())) return err.textContent = 'Enter a valid 11-digit contact number starting with 09.';
-  const paymentMethod = val('payment_method');
-  const manualPayment = ['GCash', 'Maya', 'Online Banking'].includes(paymentMethod);
-  const paymentPayer = $('#paymentPayer').value.trim();
-  const paymentReference = $('#paymentReference').value.trim();
-  if (manualPayment && (!paymentPayer || !paymentReference)) {
-    return err.textContent = 'Enter the payer name and transaction reference for your manual payment.';
+  const payment = checkoutPayment();
+  if (payment.demo === 'wallet' && (!$('#walletDemoName').value.trim() || !$('#walletDemoAccount').value.trim())) {
+    return err.textContent = 'Enter sample wallet account details to continue the demo.';
+  }
+  if (payment.demo === 'bank' && (!$('#bankDemoName').value.trim() || !$('#bankDemoAccount').value.trim() || (payment.method === 'Other Online Banking' && !payment.bankName))) {
+    return err.textContent = 'Enter sample bank account details to continue the demo.';
+  }
+  if (payment.demo === 'card') {
+    const cardNumber = $('#cardDemoNumber').value.replace(/\D/g, '');
+    const expiry = $('#cardDemoExpiry').value.trim();
+    const cvv = $('#cardDemoCvv').value.trim();
+    if (!$('#cardDemoName').value.trim() || cardNumber.length < 12 || cardNumber.length > 19 || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry) || !/^\d{3,4}$/.test(cvv)) {
+      return err.textContent = 'Enter valid-looking test card values (name, 12–19 digits, MM/YY, and 3–4 digit code). Do not use a real card.';
+    }
   }
   const orderNote = [
     $('#coNote').value.trim(),
-    manualPayment ? `Manual payment: ${paymentMethod} | Payer: ${paymentPayer} | Reference: ${paymentReference}` : ''
+    payment.demo ? `Demo payment simulated: ${payment.method}${payment.bankName ? ` (${payment.bankName})` : ''}. No real payment was processed.` : ''
   ].filter(Boolean).join('\n');
   const totals = calc();
   const button = $('#coForm').querySelector('button[type="submit"], button:not([type])');
@@ -697,7 +735,7 @@ $('#coForm').onsubmit = async e => {
     p_address: $('#coAddr').value.trim(),
     p_note: orderNote,
     p_fulfillment: delivery.pickup ? 'Pick Up' : 'Delivery',
-    p_payment_method: paymentMethod,
+    p_payment_method: payment.method,
     p_promo_code: totals.code,
     p_promo_mode: val('promo'),
     p_items: me.cart.map(item => ({product_id: item.id, quantity: item.qty}))
@@ -721,8 +759,10 @@ $('#coForm').onsubmit = async e => {
   try { await loadStock(); } catch (loadError) { showDatabaseError(loadError); }
   updateCount();
   $('#coNote').value = '';
-  $('#paymentPayer').value = ''; $('#paymentReference').value = '';
-  toast('Order placed!');
+  $('#walletDemoName').value = ''; $('#walletDemoAccount').value = '';
+  $('#bankDemoName').value = ''; $('#bankDemoAccount').value = '';
+  $('#cardDemoName').value = ''; $('#cardDemoNumber').value = ''; $('#cardDemoExpiry').value = ''; $('#cardDemoCvv').value = '';
+  toast(payment.demo ? 'Demo payment simulated. No money was transferred.' : 'Order placed!');
   orderTab = 'To Ship';
   go('mypurchase');
 };
@@ -920,13 +960,13 @@ async function renderAdmin() {
     <div class="stat"><small>Refunds to review</small><b>${refunds}</b></div>`;
   $('#ownerSales').innerHTML = bestSellers.length ? bestSellers.map(item => `<div class="sales-row"><span>${escapeHtml(item.name)} <small class="muted">(${item.quantity} sold)</small></span><b>${peso(item.revenue)}</b></div>`).join('') : '<p class="muted">Sales will appear here after customers place orders.</p>';
   $('#adminOrders').innerHTML = allOrders.length ? allOrders.map(({email, user, order}) => {
-    const manualPayment = ['GCash', 'Maya', 'Online Banking'].includes(order.method);
+    const demoPayment = DEMO_PAYMENT_METHODS.includes(order.method);
     return `
     <div class="card order">
       <div class="order-h"><b>Order #${escapeHtml(order.id)} · ${escapeHtml(user.full_name)}</b><span>${escapeHtml(email)}</span><span class="status">${escapeHtml(order.status)}</span></div>
       <p class="muted">${order.items.map(i => `${escapeHtml(P(i.id).name)} × ${i.qty}`).join(', ')} | ${peso(order.total)}</p>
       <p class="muted">${escapeHtml(order.delivery || '')} ${escapeHtml(order.fulfillment || '')} | ${escapeHtml(order.addr || '')}</p>
-      <p class="muted"><b>Payment:</b> ${escapeHtml(order.method)}${manualPayment ? ' — manually verify payment before fulfillment' : ''}</p>
+      <p class="muted"><b>Payment:</b> ${escapeHtml(order.method)}${demoPayment ? ' — demo payment simulated; no money transferred' : ''}</p>
       ${order.note ? `<p class="muted">Order note: ${escapeHtml(order.note)}</p>` : ''}
       <div class="actions">
         <select data-admin-status="${escapeHtml(order.id)}">${['To Ship', 'Preparing', 'Packaging', 'Ready for Pickup', 'Out for Delivery', 'To Receive', 'Completed', 'Return/Refund', 'Cancelled'].map(s => `<option ${order.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>

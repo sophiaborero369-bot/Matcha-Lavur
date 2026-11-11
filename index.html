@@ -256,18 +256,54 @@
         <div id="paymentOptions">
           <label class="opt" data-payment-fulfillment="delivery"><input type="radio" name="payment_method" value="Cash on Delivery" checked> Cash on Delivery</label>
           <label class="opt" data-payment-fulfillment="pickup" hidden><input type="radio" name="payment_method" value="Cash on Pickup"> Cash on Pickup</label>
-          <label class="opt"><input type="radio" name="payment_method" value="GCash"> GCash (manual transfer)</label>
-          <label class="opt"><input type="radio" name="payment_method" value="Maya"> Maya (manual transfer)</label>
-          <label class="opt"><input type="radio" name="payment_method" value="Online Banking"> Online banking (manual transfer)</label>
+          <label class="opt"><input type="radio" name="payment_method" value="E-wallet"> E-wallet (demo)</label>
+          <div id="walletOptions" class="payment-provider" hidden>
+            <label for="walletProvider">Choose an e-wallet</label>
+            <select id="walletProvider">
+              <option value="GCash">GCash</option>
+              <option value="Maya">Maya</option>
+              <option value="PayPal">PayPal</option>
+            </select>
+          </div>
+          <label class="opt"><input type="radio" name="payment_method" value="Online Banking"> Online banking (demo)</label>
+          <div id="bankOptions" class="payment-provider" hidden>
+            <label for="bankProvider">Choose your bank</label>
+            <select id="bankProvider">
+              <option value="BDO">BDO</option>
+              <option value="Other">Other online bank</option>
+            </select>
+            <div id="otherBankField" hidden>
+              <label for="otherBankName">Bank name</label>
+              <input id="otherBankName" maxlength="80" placeholder="Enter your bank name">
+            </div>
+          </div>
+          <label class="opt"><input type="radio" name="payment_method" value="Credit/Debit Card (Demo)"> Credit / debit card (demo)</label>
         </div>
-        <div id="manualPaymentFields" class="payment-details" hidden>
-          <p class="payment-notice">Manual payment only—not processed by this website. Message the seller for the confirmed receiving account before sending money. The seller must verify your reference before preparing or shipping your order.</p>
-          <button type="button" class="btn small ghost" data-go="message">Message the Seller for Payment Details</button>
-          <label for="paymentPayer">Name shown on your payment</label>
-          <input id="paymentPayer" maxlength="80" autocomplete="name" placeholder="Payer name">
-          <label for="paymentReference">Transaction or reference number</label>
-          <input id="paymentReference" maxlength="120" autocomplete="off" placeholder="Enter the transfer reference">
-          <p class="muted payment-safety">Do not enter a password, card number, CVV, PIN, or OTP.</p>
+        <div id="demoPaymentFields" class="payment-details" hidden>
+          <p class="payment-notice"><b>Project demo only.</b> Use made-up test values. No payment is processed, and these fields are never sent to or saved in the database. Never enter real payment details, passwords, PINs, or OTPs.</p>
+          <div id="walletDemoFields" hidden>
+            <label for="walletDemoName">Demo account name</label>
+            <input id="walletDemoName" maxlength="80" autocomplete="off" placeholder="Sample name">
+            <label for="walletDemoAccount">Demo mobile number or email</label>
+            <input id="walletDemoAccount" maxlength="120" autocomplete="off" placeholder="Example only (e.g. 09XXXXXXXXX)">
+          </div>
+          <div id="bankDemoFields" hidden>
+            <label for="bankDemoName">Demo account holder name</label>
+            <input id="bankDemoName" maxlength="80" autocomplete="off" placeholder="Sample name">
+            <label for="bankDemoAccount">Demo account number</label>
+            <input id="bankDemoAccount" maxlength="24" autocomplete="off" inputmode="numeric" placeholder="Test value only">
+          </div>
+          <div id="cardDemoFields" hidden>
+            <label for="cardDemoName">Name on demo card</label>
+            <input id="cardDemoName" maxlength="80" autocomplete="off" placeholder="SAMPLE CUSTOMER">
+            <label for="cardDemoNumber">Demo card number</label>
+            <input id="cardDemoNumber" maxlength="23" autocomplete="off" inputmode="numeric" placeholder="Use a made-up test number">
+            <div class="demo-card-row">
+              <div><label for="cardDemoExpiry">Expiry date</label><input id="cardDemoExpiry" maxlength="5" autocomplete="off" inputmode="numeric" placeholder="MM/YY"></div>
+              <div><label for="cardDemoCvv">Security code</label><input id="cardDemoCvv" maxlength="4" autocomplete="off" inputmode="numeric" placeholder="123"></div>
+            </div>
+          </div>
+          <p class="muted payment-safety">This is a visual/validation demo only. Never enter real card, wallet, or bank information.</p>
         </div>
 
         <h4>Voucher or Discount</h4>
@@ -283,7 +319,7 @@
         <div class="row"><span>Voucher / Discount</span><span id="sDisc"></span></div>
         <div class="row total"><span>Total Amount</span><span id="sTotal"></span></div>
         <button class="btn big">Place Order</button>
-        <p class="secure">Manual transfers are not processed by this website. The seller verifies them separately.</p>
+        <p class="secure">Online payment selections are simulated for this project; no money is transferred.</p>
         <p id="coErr" class="err"></p>
       </div>
     </form>
