@@ -89,6 +89,7 @@
 
 <!-- ========== APP ========== -->
 <div id="app" hidden>
+<div id="scrollProgress" role="progressbar" aria-label="Page scroll progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
 <header>
   <div class="bar">
     <a class="brand" data-go="home">
@@ -446,6 +447,9 @@
     </div>
   </div>
 </div>
+<button id="backToTop" type="button" aria-label="Back to top" title="Back to top" hidden>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 14 6-6 6 6"/></svg>
+</button>
 <div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>

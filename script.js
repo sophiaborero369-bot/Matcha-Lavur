@@ -521,7 +521,20 @@ function renderAccountNavigation() {
 }
 const backgroundMusic = $('#backgroundMusic');
 const musicToggle = $('#musicToggle');
+const scrollProgress = $('#scrollProgress');
+const backToTop = $('#backToTop');
 backgroundMusic.volume = 0.35;
+function updateScrollUI() {
+  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = maxScroll > 0 ? Math.min(100, Math.round(window.scrollY / maxScroll * 100)) : 0;
+  scrollProgress.setAttribute('aria-valuenow', String(progress));
+  scrollProgress.firstElementChild.style.width = `${progress}%`;
+  backToTop.hidden = window.scrollY < 320;
+}
+window.addEventListener('scroll', updateScrollUI, {passive: true});
+window.addEventListener('resize', updateScrollUI);
+backToTop.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
+updateScrollUI();
 function syncMusicToggle() {
   const isPlaying = !backgroundMusic.paused;
   const isMuted = backgroundMusic.muted || backgroundMusic.paused;
