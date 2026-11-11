@@ -104,6 +104,10 @@
       <button data-go="cart" data-customer-nav>Cart <i id="cartCount" class="badge">0</i></button>
       <button data-go="message" data-customer-nav>Message</button>
       <button data-go="support" data-customer-nav>Support</button>
+      <button id="musicToggle" type="button" aria-label="Play background music" title="Play background music">
+        <svg data-music-sound viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M16 9a5 5 0 010 6m2-9a9 9 0 010 12"/></svg>
+        <svg data-music-muted viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="m17 9 5 6m0-6-5 6"/></svg>
+      </button>
       <button data-go="admin" id="adminNav" hidden>Admin</button>
     </nav>
     <span id="liveStatus" class="live-status" role="status" aria-live="polite">Database connecting</span>
@@ -114,6 +118,7 @@
     </div>
   </div>
 </header>
+<audio id="backgroundMusic" src="images/musicbackground.mp3" preload="none" loop></audio>
 
 <main>
 <!-- HOME -->

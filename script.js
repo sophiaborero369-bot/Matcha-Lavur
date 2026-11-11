@@ -519,6 +519,36 @@ function renderAccountNavigation() {
   $$('[data-customer-nav]').forEach(button => { button.hidden = isAdmin; });
   $('#adminNav').hidden = !isAdmin;
 }
+const backgroundMusic = $('#backgroundMusic');
+const musicToggle = $('#musicToggle');
+backgroundMusic.volume = 0.35;
+function syncMusicToggle() {
+  const isPlaying = !backgroundMusic.paused && !backgroundMusic.muted;
+  musicToggle.setAttribute('aria-pressed', String(isPlaying));
+  musicToggle.setAttribute('aria-label', backgroundMusic.paused ? 'Play background music' : backgroundMusic.muted ? 'Unmute background music' : 'Mute background music');
+  musicToggle.title = musicToggle.getAttribute('aria-label');
+  $('[data-music-sound]').hidden = !isPlaying;
+  $('[data-music-muted]').hidden = isPlaying;
+}
+backgroundMusic.addEventListener('play', syncMusicToggle);
+backgroundMusic.addEventListener('pause', syncMusicToggle);
+backgroundMusic.addEventListener('volumechange', syncMusicToggle);
+backgroundMusic.play().catch(() => syncMusicToggle());
+musicToggle.addEventListener('click', async () => {
+  if (backgroundMusic.paused) {
+    backgroundMusic.muted = false;
+    try {
+      await backgroundMusic.play();
+    } catch (error) {
+      syncMusicToggle();
+      toast('Background music could not play. Check that the audio file is available and try again.');
+      console.error('Background music playback failed:', error);
+    }
+  } else {
+    backgroundMusic.muted = !backgroundMusic.muted;
+  }
+  syncMusicToggle();
+});
 function go(page) {
   if (isAdmin && ['checkout', 'mypurchase', 'cart', 'message', 'support'].includes(page)) return go('admin');
   if (['checkout', 'mypurchase', 'cart', 'message'].includes(page) && !requireLogin(page)) return;
