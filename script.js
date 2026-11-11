@@ -523,22 +523,27 @@ const backgroundMusic = $('#backgroundMusic');
 const musicToggle = $('#musicToggle');
 backgroundMusic.volume = 0.35;
 function syncMusicToggle() {
-  const isPlaying = !backgroundMusic.paused && !backgroundMusic.muted;
-  musicToggle.setAttribute('aria-pressed', String(isPlaying));
-  musicToggle.setAttribute('aria-label', backgroundMusic.paused ? 'Play background music' : backgroundMusic.muted ? 'Unmute background music' : 'Mute background music');
+  const isPlaying = !backgroundMusic.paused;
+  const isMuted = backgroundMusic.muted || backgroundMusic.paused;
+  musicToggle.setAttribute('aria-pressed', String(isPlaying && !isMuted));
+  musicToggle.setAttribute('aria-label', isMuted ? 'Unmute background music' : 'Mute background music');
   musicToggle.title = musicToggle.getAttribute('aria-label');
-  $('[data-music-sound]').hidden = !isPlaying;
-  $('[data-music-muted]').hidden = isPlaying;
+  $('[data-music-sound]').hidden = isMuted;
+  $('[data-music-muted]').hidden = !isMuted;
 }
 backgroundMusic.addEventListener('play', syncMusicToggle);
 backgroundMusic.addEventListener('pause', syncMusicToggle);
 backgroundMusic.addEventListener('volumechange', syncMusicToggle);
-backgroundMusic.play().catch(() => syncMusicToggle());
+backgroundMusic.muted = true;
+backgroundMusic.play().catch(error => {
+  syncMusicToggle();
+  console.error('Background music autoplay failed:', error);
+});
 musicToggle.addEventListener('click', async () => {
   if (backgroundMusic.paused) {
-    backgroundMusic.muted = false;
     try {
       await backgroundMusic.play();
+      backgroundMusic.muted = false;
     } catch (error) {
       syncMusicToggle();
       toast('Background music could not play. Check that the audio file is available and try again.');
