@@ -257,9 +257,9 @@ footer{text-align:center;padding:20px;background:var(--dark);color:#d8f5e0;font-
 .img-card .modal-actions{justify-content:center}
 
 /* ===== MATCHA NEON FINISH ===== */
-body{color:#eafff0;background-color:#07170f;background-image:radial-gradient(ellipse at 10% 12%,#1bd8792b,transparent 34%),radial-gradient(ellipse at 88% 28%,#ff4fa51b,transparent 30%),radial-gradient(ellipse at 50% 90%,#73ff9e17,transparent 38%),linear-gradient(145deg,#07170f,#0b2117 52%,#08150f);background-attachment:fixed}
+body{color:#23332b;background-color:#879b68;background-image:radial-gradient(ellipse at 10% 12%,#f8efc726,transparent 34%),radial-gradient(ellipse at 88% 28%,#f3c9b51a,transparent 30%),radial-gradient(ellipse at 50% 90%,#b5cd8a22,transparent 38%),linear-gradient(145deg,#91a974,#78925e 52%,#879b68);background-attachment:fixed}
 main{position:relative}
-.title,.sec-h{color:#f0fff4;text-shadow:0 0 12px #63ff9c77,0 0 28px #20c96844}
+.title,.sec-h{color:#1f4d3a;text-shadow:0 1px 2px #f4f4d877}
 .title::before{background:linear-gradient(180deg,#ff7eb6,#b6ff78 55%,#52ffc2);box-shadow:0 0 9px #8cffae,0 0 20px #58ef9188}
 header{background:linear-gradient(110deg,#063c28,#087447 35%,#12a15e 62%,#7ed957);box-shadow:0 2px 0 #b5ffbd,0 0 14px #30ff9366,0 8px 32px #07170f99}
 nav button:hover,nav button.active{background:#c9ffdc2b;box-shadow:inset 0 0 0 1px #baffd277,0 0 18px #65ff9a66;text-shadow:0 0 8px #fff,0 0 16px #a0ffbf}
