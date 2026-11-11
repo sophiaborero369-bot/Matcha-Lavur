@@ -247,11 +247,8 @@
         <input id="coPhone" placeholder="Contact number (09XXXXXXXXX)" required>
         <textarea id="coNote" rows="2" placeholder="Note to seller (optional)"></textarea>
 
-        <h4>Pickup or Delivery</h4>
-        <label class="opt"><input type="radio" name="fulfillment" value="delivery" checked> Home Delivery <b class="right" id="deliveryFee"></b></label>
-        <label class="opt"><input type="radio" name="fulfillment" value="pickup"> Pick Up <b class="right">Free</b></label>
+        <h4>Delivery Area</h4>
         <div id="coDeliveryAreaField" class="delivery-area">
-          <label for="coDeliveryArea">Delivery Area</label>
           <select id="coDeliveryArea" required>
             <option value="davao">Davao City (delivery in minutes)</option>
             <option value="outside">Outside Davao City (powder and merchandise only)</option>
@@ -260,57 +257,60 @@
         </div>
         <p id="deliveryHint" class="muted">Drinks and sweets are available in Davao City. Powder and merchandise deliver in 2–4 days.</p>
 
+        <h4>Pickup or Delivery</h4>
+        <label class="opt"><input type="radio" name="fulfillment" value="delivery" checked> Home Delivery <b class="right" id="deliveryFee"></b></label>
+        <label class="opt"><input type="radio" name="fulfillment" value="pickup"> Pick Up <b class="right">Free</b></label>
+
         <h4>Preferred Payment</h4>
         <div id="paymentOptions">
           <label class="opt" data-payment-fulfillment="delivery"><input type="radio" name="payment_method" value="Cash on Delivery" checked> Cash on Delivery</label>
           <label class="opt" data-payment-fulfillment="pickup" hidden><input type="radio" name="payment_method" value="Cash on Pickup"> Cash on Pickup</label>
-          <label class="opt"><input type="radio" name="payment_method" value="E-wallet"> Payment Center / E-Wallet (demo)</label>
+          <label class="opt"><input type="radio" name="payment_method" value="E-wallet"> Payment Center / E-Wallet</label>
           <div id="walletOptions" class="payment-provider" hidden>
-            <label for="walletProvider">Choose an e-wallet</label>
-            <select id="walletProvider">
-              <option value="GCash">GCash</option>
-              <option value="Maya">Maya</option>
-              <option value="PayPal">PayPal</option>
-            </select>
+            <div class="provider-choices" role="group" aria-label="Choose e-wallet">
+              <label class="provider-choice"><input type="radio" name="wallet_provider" value="GCash" checked> GCash</label>
+              <label class="provider-choice"><input type="radio" name="wallet_provider" value="Maya"> Maya</label>
+              <label class="provider-choice"><input type="radio" name="wallet_provider" value="PayPal"> PayPal</label>
+            </div>
           </div>
-          <label class="opt"><input type="radio" name="payment_method" value="Online Banking"> Online banking (demo)</label>
+          <label class="opt"><input type="radio" name="payment_method" value="Online Banking"> Online Banking</label>
           <div id="bankOptions" class="payment-provider" hidden>
             <label for="bankProvider">Choose your bank</label>
             <select id="bankProvider">
+              <option value="UnionBank">UnionBank</option>
               <option value="BDO">BDO</option>
-              <option value="Other">Other online bank</option>
+              <option value="Other">Other online banking</option>
             </select>
             <div id="otherBankField" hidden>
               <label for="otherBankName">Bank name</label>
-              <input id="otherBankName" maxlength="80" placeholder="Enter your bank name">
+              <input id="otherBankName" maxlength="80" autocomplete="off" placeholder="Enter your bank name">
             </div>
           </div>
-          <label class="opt"><input type="radio" name="payment_method" value="Credit/Debit Card (Demo)"> Credit / debit card (demo)</label>
         </div>
         <div id="demoPaymentFields" class="payment-details" hidden>
-          <p class="payment-notice"><b>Project demo only.</b> Use fictional test values only. These fields are checked in your browser and are never sent to or saved in the database. The selected payment method is saved with the order; no payment is processed. Never enter real account/card details, passwords, PINs, or OTPs.</p>
+          <p class="payment-notice"><b>Project demo only.</b> Use fictional test values only. The fields below are checked in your browser and are never sent to or saved in the database. The selected payment method is saved with the order; no payment is processed.</p>
           <p id="demoPaymentDescription" class="muted"></p>
           <div id="walletDemoFields" class="demo-payment-group" hidden>
-            <label for="walletDemoName">Demo account name</label>
-            <input id="walletDemoName" maxlength="80" autocomplete="off" placeholder="Sample name">
-            <label for="walletDemoAccount">Demo mobile number or email</label>
-            <input id="walletDemoAccount" maxlength="120" autocomplete="off" placeholder="Fictional test value">
+            <label for="walletDemoName">Account name</label>
+            <input id="walletDemoName" maxlength="80" autocomplete="off" placeholder="Account name">
+            <label for="walletDemoAccount" id="walletAccountLabel">GCash mobile number (09XXXXXXXXX)</label>
+            <input id="walletDemoAccount" maxlength="120" autocomplete="off" placeholder="09XXXXXXXXX">
+            <div id="walletMpinField">
+              <label for="walletDemoMpin">MPIN (4 digits)</label>
+              <input id="walletDemoMpin" type="password" maxlength="4" autocomplete="new-password" inputmode="numeric" pattern="[0-9]{4}" placeholder="Demo MPIN">
+            </div>
+            <p class="muted payment-safety">You will confirm this simulated payment with a one-time password (OTP). No OTP is requested or sent by this demo.</p>
           </div>
           <div id="bankDemoFields" class="demo-payment-group" hidden>
-            <label for="bankDemoName">Demo account name</label>
-            <input id="bankDemoName" maxlength="80" autocomplete="off" placeholder="Sample name">
-            <label for="bankDemoAccount">Demo bank account number</label>
-            <input id="bankDemoAccount" maxlength="20" autocomplete="off" inputmode="numeric" placeholder="Fictional test number">
-          </div>
-          <div id="cardDemoFields" class="demo-payment-group" hidden>
-            <label for="cardDemoName">Name on demo card</label>
-            <input id="cardDemoName" maxlength="80" autocomplete="off" placeholder="SAMPLE CUSTOMER">
-            <label for="cardDemoNumber">Demo card number</label>
-            <input id="cardDemoNumber" maxlength="23" autocomplete="off" inputmode="numeric" placeholder="Fictional 12–19 digit number">
+            <label for="bankDemoName">Account name (as shown on your card)</label>
+            <input id="bankDemoName" maxlength="80" autocomplete="off" placeholder="Sample account name">
+            <label for="bankDemoAccount">Account / card number (10 to 16 digits)</label>
+            <input id="bankDemoAccount" maxlength="19" autocomplete="off" inputmode="numeric" placeholder="Demo digits only">
             <div class="demo-card-row">
-              <div><label for="cardDemoExpiry">Expiry date</label><input id="cardDemoExpiry" maxlength="5" autocomplete="off" inputmode="numeric" placeholder="MM/YY"></div>
-              <div><label for="cardDemoCvv">CVV (test value)</label><input id="cardDemoCvv" maxlength="4" autocomplete="off" inputmode="numeric" placeholder="3–4 digits"></div>
+              <div><label for="bankDemoExpiry">Expiry date (MM/YY)</label><input id="bankDemoExpiry" maxlength="5" autocomplete="off" inputmode="numeric" placeholder="MM/YY"></div>
+              <div><label for="bankDemoCvv">CVV (demo only)</label><input id="bankDemoCvv" type="password" maxlength="4" autocomplete="new-password" inputmode="numeric" placeholder="CVV"></div>
             </div>
+            <p class="muted payment-safety">You will confirm this simulated payment with a one-time password (OTP). No OTP is requested or sent by this demo.</p>
           </div>
           <p class="muted payment-safety">Press “Simulate Payment &amp; Place Order” to continue the demo. This does not transfer money.</p>
         </div>

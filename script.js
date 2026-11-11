@@ -632,13 +632,15 @@ function calc() {
 }
 function checkoutPayment() {
   const choice = val('payment_method');
-  if (choice === 'E-wallet') return {method: $('#walletProvider').value, demo: 'wallet', bankName: ''};
+  if (choice === 'E-wallet') {
+    const method = document.querySelector('input[name="wallet_provider"]:checked').value;
+    return {method, demo: 'wallet', bankName: ''};
+  }
   if (choice === 'Online Banking') {
     const bank = $('#bankProvider').value;
     const bankName = bank === 'Other' ? $('#otherBankName').value.trim() : '';
-    return {method: bank === 'BDO' ? 'BDO Online Banking' : 'Other Online Banking', demo: 'bank', bankName};
+    return {method: 'Online Banking', demo: 'bank', bankName: bank === 'Other' ? bankName : bank};
   }
-  if (choice === 'Credit/Debit Card (Demo)') return {method: choice, demo: 'card', bankName: ''};
   return {method: choice, demo: '', bankName: ''};
 }
 function renderCheckout() {
@@ -665,21 +667,37 @@ function renderCheckout() {
   const otherBank = selectedPayment === 'Online Banking' && $('#bankProvider').value === 'Other';
   $('#otherBankField').hidden = !otherBank;
   $('#otherBankName').required = otherBank;
+  if (!otherBank) $('#otherBankName').value = '';
   $('#demoPaymentFields').hidden = !payment.demo;
   const isWallet = payment.demo === 'wallet';
   const isBank = payment.demo === 'bank';
-  const isCard = payment.demo === 'card';
   $('#walletDemoFields').hidden = !isWallet;
   $('#bankDemoFields').hidden = !isBank;
-  $('#cardDemoFields').hidden = !isCard;
   $('#walletDemoName').required = isWallet;
   $('#walletDemoAccount').required = isWallet;
   $('#bankDemoName').required = isBank;
   $('#bankDemoAccount').required = isBank;
-  $('#cardDemoName').required = isCard;
-  $('#cardDemoNumber').required = isCard;
-  $('#cardDemoExpiry').required = isCard;
-  $('#cardDemoCvv').required = isCard;
+  const walletProvider = isWallet ? payment.method : '';
+  const requiresMpin = isWallet && walletProvider !== 'PayPal';
+  $('#walletAccountLabel').textContent = walletProvider === 'PayPal'
+    ? 'PayPal email address'
+    : `${walletProvider} mobile number (09XXXXXXXXX)`;
+  $('#walletDemoAccount').placeholder = walletProvider === 'PayPal' ? 'demo@example.com' : '09XXXXXXXXX';
+  $('#walletMpinField').hidden = !requiresMpin;
+  $('#walletDemoMpin').required = requiresMpin;
+  if (!requiresMpin) $('#walletDemoMpin').value = '';
+  if (!isWallet) {
+    $('#walletDemoName').value = '';
+    $('#walletDemoAccount').value = '';
+  }
+  if (!isBank) {
+    $('#bankDemoName').value = '';
+    $('#bankDemoAccount').value = '';
+    $('#bankDemoExpiry').value = '';
+    $('#bankDemoCvv').value = '';
+  }
+  $('#bankDemoExpiry').required = isBank;
+  $('#bankDemoCvv').required = isBank;
   $('#demoPaymentDescription').textContent = payment.demo
     ? `${payment.method}${payment.bankName ? ` (${payment.bankName})` : ''} selected. This project will simulate the payment result.`
     : '';
@@ -720,24 +738,24 @@ $('#coForm').onsubmit = async e => {
   }
   if (!/^09\d{9}$/.test($('#coPhone').value.trim())) return err.textContent = 'Enter a valid 11-digit contact number starting with 09.';
   const payment = checkoutPayment();
-  if (payment.demo === 'wallet' && (!$('#walletDemoName').value.trim() || !$('#walletDemoAccount').value.trim())) {
-    return err.textContent = 'Enter fictional test wallet details to continue the demo.';
+  if (payment.demo === 'wallet') {
+    const account = $('#walletDemoAccount').value.trim();
+    const validAccount = payment.method === 'PayPal' ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(account) : /^09\d{9}$/.test(account);
+    const validMpin = payment.method === 'PayPal' || /^\d{4}$/.test($('#walletDemoMpin').value);
+    if (!$('#walletDemoName').value.trim() || !validAccount || !validMpin) {
+      return err.textContent = `Enter fictional ${payment.method} test details to continue the demo.`;
+    }
   }
-  if (payment.demo === 'bank' && (!$('#bankDemoName').value.trim() || !/^\d{8,20}$/.test($('#bankDemoAccount').value.trim()))) {
-    return err.textContent = 'Enter a sample account name and an 8–20 digit fictional bank number.';
-  }
-  if (payment.demo === 'card') {
-    const cardNumber = $('#cardDemoNumber').value.replace(/\D/g, '');
-    const expiry = $('#cardDemoExpiry').value.trim();
-    const cvv = $('#cardDemoCvv').value.trim();
-    if (!$('#cardDemoName').value.trim() || !/^\d{12,19}$/.test(cardNumber) ||
-        !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry) || !/^\d{3,4}$/.test(cvv)) {
-      return err.textContent = 'Enter fictional test values: name, 12–19 digit number, MM/YY expiry, and 3–4 digit CVV. Never use a real card.';
+  if (payment.demo === 'bank') {
+    const expiry = $('#bankDemoExpiry').value.trim();
+    if (!$('#bankDemoName').value.trim() || !/^\d{10,16}$/.test($('#bankDemoAccount').value.trim()) ||
+        !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry) || !/^\d{3,4}$/.test($('#bankDemoCvv').value.trim())) {
+      return err.textContent = 'Enter fictional test values: account name, 10–16 digit number, MM/YY expiry, and 3–4 digit CVV.';
     }
   }
   const orderNote = [
     $('#coNote').value.trim(),
-    payment.demo ? `Demo payment simulated: ${payment.method}${payment.bankName ? ` (${payment.bankName})` : ''}. No real payment was processed.` : ''
+    payment.demo ? `Demo payment simulated: ${payment.method}${payment.bankName ? ` - ${payment.bankName}` : ''}. No real payment was processed.` : ''
   ].filter(Boolean).join('\n');
   const totals = calc();
   const button = $('#coForm').querySelector('button[type="submit"], button:not([type])');
@@ -773,9 +791,9 @@ $('#coForm').onsubmit = async e => {
   updateCount();
   $('#coNote').value = '';
   $('#walletDemoName').value = ''; $('#walletDemoAccount').value = '';
+  $('#walletDemoMpin').value = '';
   $('#bankDemoName').value = ''; $('#bankDemoAccount').value = '';
-  $('#cardDemoName').value = ''; $('#cardDemoNumber').value = '';
-  $('#cardDemoExpiry').value = ''; $('#cardDemoCvv').value = '';
+  $('#bankDemoExpiry').value = ''; $('#bankDemoCvv').value = '';
   toast(payment.demo ? 'Demo payment simulated. No money was transferred.' : 'Order placed!');
   orderTab = 'To Ship';
   go('mypurchase');
