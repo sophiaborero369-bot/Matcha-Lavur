@@ -54,7 +54,7 @@ const DISCOUNTS = [
 ];
 const SHIP = {std: 49, exp: 99};
 const DEMO_PAYMENT_METHODS = ['GCash', 'Maya', 'PayPal', 'Online Banking', 'BDO Online Banking', 'Other Online Banking', 'Credit/Debit Card (Demo)'];
-const OWNER_USER_ID = '5c838b4c-867d-4a53-8fa7-bb0ee2c72106';
+const OWNER_EMAIL = 'matchalavur@gmail.com';
 const FAQ = [
   ['How do I place an order?', 'Add items to your cart, open Purchase, fill in your details, choose delivery or pickup, and press Place Order.'],
   ['What payment methods are accepted?', 'Cash on delivery, cash on pickup, or demo e-wallet, online banking, and card options. Online payment details are test-only and no real payment is processed.'],
@@ -92,21 +92,23 @@ const save = () => {
       photo_url: me.profile.photo
     }).eq('id', authUser.id);
     if (profileResult.error) throw profileResult.error;
-    const cartResult = await supabaseClient.from('cart_items').delete().eq('customer_id', authUser.id);
-    if (cartResult.error) throw cartResult.error;
-    if (me.cart.length) {
-      const result = await supabaseClient.from('cart_items').insert(me.cart.map(item => ({
-        customer_id: authUser.id, product_id: item.id, quantity: item.qty
-      })));
-      if (result.error) throw result.error;
-    }
-    const wishlistResult = await supabaseClient.from('wishlist_items').delete().eq('customer_id', authUser.id);
-    if (wishlistResult.error) throw wishlistResult.error;
-    if (me.wish.length) {
-      const result = await supabaseClient.from('wishlist_items').insert(me.wish.map(id => ({
-        customer_id: authUser.id, product_id: id
-      })));
-      if (result.error) throw result.error;
+    if (!isAdmin) {
+      const cartResult = await supabaseClient.from('cart_items').delete().eq('customer_id', authUser.id);
+      if (cartResult.error) throw cartResult.error;
+      if (me.cart.length) {
+        const result = await supabaseClient.from('cart_items').insert(me.cart.map(item => ({
+          customer_id: authUser.id, product_id: item.id, quantity: item.qty
+        })));
+        if (result.error) throw result.error;
+      }
+      const wishlistResult = await supabaseClient.from('wishlist_items').delete().eq('customer_id', authUser.id);
+      if (wishlistResult.error) throw wishlistResult.error;
+      if (me.wish.length) {
+        const result = await supabaseClient.from('wishlist_items').insert(me.wish.map(id => ({
+          customer_id: authUser.id, product_id: id
+        })));
+        if (result.error) throw result.error;
+      }
     }
   });
   saveQueue = operation.catch(showDatabaseError);
@@ -129,6 +131,21 @@ function setRealtimeStatus(status) {
 async function refreshRealtimeState(userId) {
   await loadStock();
   if (userId) {
+    if (isAdmin) {
+      const {data: profile, error} = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
+      if (error) throw error;
+      if (authUser?.id !== userId) return;
+      me.name = profile.full_name || authUser.user_metadata?.full_name || authUser.email;
+      me.profile = {photo: profile.photo_url || '', phone: profile.phone || '', addr: profile.address || '', bio: profile.bio || ''};
+      me.cart = []; me.wish = []; me.orders = []; me.msgs = []; me.voted = [];
+      const {data: customers, error: customersError} = await supabaseClient.from('profiles').select('id,email,full_name').neq('id', userId);
+      if (customersError) throw customersError;
+      ownerCustomers = customers;
+      renderHeader();
+      updateCount();
+      if (visiblePage() === 'admin') await renderAdmin();
+      return;
+    }
     const results = await Promise.all([
       supabaseClient.from('profiles').select('*').eq('id', userId).single(),
       supabaseClient.from('cart_items').select('product_id,quantity').eq('customer_id', userId),
@@ -228,7 +245,7 @@ async function subscribeToStoreChanges(user) {
       })
       .on('postgres_changes', {event: '*', schema: 'public', table: 'cart_items'}, async () => {
         try {
-          if (authUser?.id !== user.id) return;
+          if (isAdmin || authUser?.id !== user.id) return;
           const {data, error} = await supabaseClient.from('cart_items').select('product_id,quantity').eq('customer_id', user.id);
           if (error) throw error;
           me.cart = data.map(item => ({id: item.product_id, qty: item.quantity}));
@@ -239,7 +256,7 @@ async function subscribeToStoreChanges(user) {
       })
       .on('postgres_changes', {event: '*', schema: 'public', table: 'wishlist_items'}, async () => {
         try {
-          if (authUser?.id !== user.id) return;
+          if (isAdmin || authUser?.id !== user.id) return;
           const {data, error} = await supabaseClient.from('wishlist_items').select('product_id').eq('customer_id', user.id);
           if (error) throw error;
           me.wish = data.map(item => item.product_id);
@@ -248,7 +265,7 @@ async function subscribeToStoreChanges(user) {
       })
       .on('postgres_changes', {event: '*', schema: 'public', table: 'review_votes'}, async () => {
         try {
-          if (authUser?.id !== user.id) return;
+          if (isAdmin || authUser?.id !== user.id) return;
           const {data, error} = await supabaseClient.from('review_votes').select('review_id').eq('customer_id', user.id);
           if (error) throw error;
           me.voted = data.map(vote => vote.review_id);
@@ -312,32 +329,36 @@ function showDatabaseError(error) {
   toast(error.message || 'Database request failed. Please try again.');
 }
 async function loadAccountData(user) {
-  const [profileResult, cartResult, wishlistResult, ordersResult, messagesResult, votesResult] = await Promise.all([
-    supabaseClient.from('profiles').select('*').eq('id', user.id).single(),
-    supabaseClient.from('cart_items').select('product_id,quantity').eq('customer_id', user.id),
-    supabaseClient.from('wishlist_items').select('product_id').eq('customer_id', user.id),
-    supabaseClient.from('orders').select('*,order_items(*)').order('created_at', {ascending: false}),
-    supabaseClient.from('messages').select('*').eq('customer_id', user.id).order('created_at'),
-    supabaseClient.from('review_votes').select('review_id').eq('customer_id', user.id)
-  ]);
-  for (const result of [profileResult, cartResult, wishlistResult, ordersResult, messagesResult, votesResult]) {
-    if (result.error) throw result.error;
-  }
+  isAdmin = user.email?.toLowerCase() === OWNER_EMAIL;
+  const profileResult = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+  if (profileResult.error) throw profileResult.error;
   const profile = profileResult.data;
+  let cart = [], wishlist = [], orders = [], messages = [], votes = [];
+  if (!isAdmin) {
+    const results = await Promise.all([
+      supabaseClient.from('cart_items').select('product_id,quantity').eq('customer_id', user.id),
+      supabaseClient.from('wishlist_items').select('product_id').eq('customer_id', user.id),
+      supabaseClient.from('orders').select('*,order_items(*)').order('created_at', {ascending: false}),
+      supabaseClient.from('messages').select('*').eq('customer_id', user.id).order('created_at'),
+      supabaseClient.from('review_votes').select('review_id').eq('customer_id', user.id)
+    ]);
+    for (const result of results) if (result.error) throw result.error;
+    [cart, wishlist, orders, messages, votes] = results.map(result => result.data);
+  }
   me = {
     name: profile.full_name || user.user_metadata?.full_name || user.email,
     profile: {photo: profile.photo_url || '', phone: profile.phone || '', addr: profile.address || '', bio: profile.bio || ''},
-    cart: cartResult.data.map(item => ({id: item.product_id, qty: item.quantity})),
-    wish: wishlistResult.data.map(item => item.product_id),
-    voted: votesResult.data.map(vote => vote.review_id),
-    msgs: messagesResult.data.map(message => ({id: message.id, from: message.sender_role === 'customer' ? 'me' : 'them', t: message.message, time: new Date(message.created_at).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'})})),
-    orders: ordersResult.data.filter(order => order.customer_id === user.id).map(mapDatabaseOrder)
+    cart: cart.map(item => ({id: item.product_id, qty: item.quantity})),
+    wish: wishlist.map(item => item.product_id),
+    voted: votes.map(vote => vote.review_id),
+    msgs: messages.map(message => ({id: message.id, from: message.sender_role === 'customer' ? 'me' : 'them', t: message.message, time: new Date(message.created_at).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'})})),
+    orders: orders.filter(order => order.customer_id === user.id).map(mapDatabaseOrder)
   };
   session = user.email;
   authUser = user;
-  isAdmin = user.id === OWNER_USER_ID;
   $('#auth').hidden = true; $('#app').hidden = false; $('#loginLink').hidden = true;
-  $('#profileBtn').hidden = false; $('#logout').hidden = false; $('#adminNav').hidden = !isAdmin;
+  $('#profileBtn').hidden = false; $('#logout').hidden = false;
+  renderAccountNavigation();
   $('#coName').value = me.name; $('#coEmail').value = user.email; $('#coPhone').value = me.profile.phone; $('#coAddr').value = me.profile.addr;
   renderHeader(); updateCount(); go(isAdmin ? 'admin' : pendingPage); pendingPage = 'home';
 }
@@ -381,7 +402,8 @@ async function startGuest(signOut = false) {
   me = null; authUser = null; isAdmin = false; session = null;
   await subscribeToStoreChanges(null);
   $('#auth').hidden = true; $('#app').hidden = false;
-  $('#loginLink').hidden = false; $('#profileBtn').hidden = true; $('#logout').hidden = true; $('#adminNav').hidden = true;
+  $('#loginLink').hidden = false; $('#profileBtn').hidden = true; $('#logout').hidden = true;
+  renderAccountNavigation();
   go('home');
 }
 function requireLogin(page = 'home') {
@@ -493,7 +515,12 @@ $('#profileForm').onsubmit = e => {
 };
 
 /* ---------- NAVIGATION ---------- */
+function renderAccountNavigation() {
+  $$('[data-customer-nav]').forEach(button => { button.hidden = isAdmin; });
+  $('#adminNav').hidden = !isAdmin;
+}
 function go(page) {
+  if (isAdmin && ['checkout', 'mypurchase', 'cart', 'message', 'support'].includes(page)) return go('admin');
   if (['checkout', 'mypurchase', 'cart', 'message'].includes(page) && !requireLogin(page)) return;
   if (page === 'admin' && !isAdmin) return go('home');
   $$('[data-page]').forEach(s => s.hidden = s.dataset.page !== page);
@@ -546,25 +573,26 @@ function renderProducts() {
   let list = PRODUCTS.filter(p => (cat === 'all' || (cat === 'Wishlist' ? wishlist.includes(p.id) : p.cat === cat)) && (p.name + p.desc).toLowerCase().includes(q));
   if (s === 'asc') list.sort((a, b) => a.price - b.price); if (s === 'desc') list.sort((a, b) => b.price - a.price); if (s === 'rate') list.sort((a, b) => b.rate - a.rate);
   $('#productGrid').innerHTML = list.map(p => `<div class="prod">
-    <button class="heart ${wishlist.includes(p.id) ? 'on' : ''}" data-wish="${p.id}" title="Wishlist">♥</button>
+    ${isAdmin ? '' : `<button class="heart ${wishlist.includes(p.id) ? 'on' : ''}" data-wish="${p.id}" title="Wishlist">♥</button>`}
     <div class="zoom" data-view="${p.id}">${phImg(p.img, 'PRODUCT PHOTO')}</div>
     <div class="prod-b"><span class="tag">${p.cat}</span><b>${p.name}</b><small class="muted">${p.desc}</small>
     <span class="star">${stars(p.rate)} <small>${p.rate}</small></span><span class="price">${peso(p.price)}</span>
     <small class="muted">${Math.max(0, Number(stock[p.id]) || 0)} available</small>
-    <button class="btn" data-add="${p.id}" ${Number(stock[p.id]) < 1 ? 'disabled' : ''}>${Number(stock[p.id]) < 1 ? 'Out of stock' : 'Add to Cart'}</button></div></div>`).join('') || '<p class="empty">No products found.</p>';
+    ${isAdmin ? '' : `<button class="btn" data-add="${p.id}" ${Number(stock[p.id]) < 1 ? 'disabled' : ''}>${Number(stock[p.id]) < 1 ? 'Out of stock' : 'Add to Cart'}</button>`}</div></div>`).join('') || '<p class="empty">No products found.</p>';
 }
 $('#search').oninput = $('#sort').onchange = renderProducts;
 $('#chips').onclick = e => { const c = e.target.closest('.chip'); if (!c) return; cat = c.dataset.cat; $$('#chips .chip').forEach(x => x.classList.toggle('active', x === c)); renderProducts(); };
 document.addEventListener('click', e => {
   const a = e.target.closest('[data-add]'), w = e.target.closest('[data-wish]');
   if (a) {
+    if (isAdmin) return;
     if (!requireLogin('products')) return;
     const id = +a.dataset.add, it = me.cart.find(i => i.id === id);
     if ((Number(stock[id]) || 0) < (it ? it.qty + 1 : 1)) return toast('Sorry, this item is out of stock.');
     it ? it.qty++ : me.cart.push({id, qty: 1}); save(); updateCount();
     toast('Added to cart: ' + P(id).name); if (!$('[data-page=cart]').hidden) renderCart();
   }
-  if (w) { if (!requireLogin('products')) return; const id = +w.dataset.wish, i = me.wish.indexOf(id); i < 0 ? me.wish.push(id) : me.wish.splice(i, 1); save(); renderProducts(); }
+  if (w) { if (isAdmin || !requireLogin('products')) return; const id = +w.dataset.wish, i = me.wish.indexOf(id); i < 0 ? me.wish.push(id) : me.wish.splice(i, 1); save(); renderProducts(); }
 });
 
 /* ---------- CART ---------- */
@@ -638,8 +666,7 @@ function checkoutPayment() {
   }
   if (choice === 'Online Banking') {
     const bank = $('#bankProvider').value;
-    const bankName = bank === 'Other' ? $('#otherBankName').value.trim() : '';
-    return {method: 'Online Banking', demo: 'bank', bankName: bank === 'Other' ? bankName : bank};
+    return {method: 'Online Banking', demo: 'bank', bankName: bank};
   }
   return {method: choice, demo: '', bankName: ''};
 }
@@ -664,10 +691,6 @@ function renderCheckout() {
   const payment = checkoutPayment();
   $('#walletOptions').hidden = selectedPayment !== 'E-wallet';
   $('#bankOptions').hidden = selectedPayment !== 'Online Banking';
-  const otherBank = selectedPayment === 'Online Banking' && $('#bankProvider').value === 'Other';
-  $('#otherBankField').hidden = !otherBank;
-  $('#otherBankName').required = otherBank;
-  if (!otherBank) $('#otherBankName').value = '';
   $('#demoPaymentFields').hidden = !payment.demo;
   const isWallet = payment.demo === 'wallet';
   const isBank = payment.demo === 'bank';

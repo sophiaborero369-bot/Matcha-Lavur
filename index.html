@@ -99,11 +99,11 @@
       <button data-go="home">Home</button>
       <button data-go="products">Matcha Collection</button>
       <button data-go="reviews">Reviews</button>
-      <button data-go="checkout">Purchase</button>
-      <button data-go="mypurchase">My Purchase</button>
-      <button data-go="cart">Cart <i id="cartCount" class="badge">0</i></button>
-      <button data-go="message">Message</button>
-      <button data-go="support">Support</button>
+      <button data-go="checkout" data-customer-nav>Purchase</button>
+      <button data-go="mypurchase" data-customer-nav>My Purchase</button>
+      <button data-go="cart" data-customer-nav>Cart <i id="cartCount" class="badge">0</i></button>
+      <button data-go="message" data-customer-nav>Message</button>
+      <button data-go="support" data-customer-nav>Support</button>
       <button data-go="admin" id="adminNav" hidden>Admin</button>
     </nav>
     <span id="liveStatus" class="live-status" role="status" aria-live="polite">Database connecting</span>
@@ -279,12 +279,11 @@
             <select id="bankProvider">
               <option value="UnionBank">UnionBank</option>
               <option value="BDO">BDO</option>
-              <option value="Other">Other online banking</option>
+              <option value="BPI">BPI</option>
+              <option value="Metrobank">Metrobank</option>
+              <option value="Landbank">Landbank</option>
+              <option value="Security Bank">Security Bank</option>
             </select>
-            <div id="otherBankField" hidden>
-              <label for="otherBankName">Bank name</label>
-              <input id="otherBankName" maxlength="80" autocomplete="off" placeholder="Enter your bank name">
-            </div>
           </div>
         </div>
         <div id="demoPaymentFields" class="payment-details" hidden>
