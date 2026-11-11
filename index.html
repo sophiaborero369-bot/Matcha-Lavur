@@ -250,13 +250,21 @@
         <h4>Pickup or Delivery</h4>
         <label class="opt"><input type="radio" name="fulfillment" value="delivery" checked> Home Delivery <b class="right" id="deliveryFee"></b></label>
         <label class="opt"><input type="radio" name="fulfillment" value="pickup"> Pick Up <b class="right">Free</b></label>
+        <div id="coDeliveryAreaField" class="delivery-area">
+          <label for="coDeliveryArea">Delivery Area</label>
+          <select id="coDeliveryArea" required>
+            <option value="davao">Davao City (delivery in minutes)</option>
+            <option value="outside">Outside Davao City (powder and merchandise only)</option>
+          </select>
+          <p id="coAreaHint" class="muted">Drinks, sweets, powder and merchandise. Delivery in minutes.</p>
+        </div>
         <p id="deliveryHint" class="muted">Drinks and sweets are available in Davao City. Powder and merchandise deliver in 2–4 days.</p>
 
         <h4>Preferred Payment</h4>
         <div id="paymentOptions">
           <label class="opt" data-payment-fulfillment="delivery"><input type="radio" name="payment_method" value="Cash on Delivery" checked> Cash on Delivery</label>
           <label class="opt" data-payment-fulfillment="pickup" hidden><input type="radio" name="payment_method" value="Cash on Pickup"> Cash on Pickup</label>
-          <label class="opt"><input type="radio" name="payment_method" value="E-wallet"> E-wallet (demo)</label>
+          <label class="opt"><input type="radio" name="payment_method" value="E-wallet"> Payment Center / E-Wallet (demo)</label>
           <div id="walletOptions" class="payment-provider" hidden>
             <label for="walletProvider">Choose an e-wallet</label>
             <select id="walletProvider">
@@ -280,30 +288,31 @@
           <label class="opt"><input type="radio" name="payment_method" value="Credit/Debit Card (Demo)"> Credit / debit card (demo)</label>
         </div>
         <div id="demoPaymentFields" class="payment-details" hidden>
-          <p class="payment-notice"><b>Project demo only.</b> Use made-up test values. No payment is processed, and these fields are never sent to or saved in the database. Never enter real payment details, passwords, PINs, or OTPs.</p>
-          <div id="walletDemoFields" hidden>
+          <p class="payment-notice"><b>Project demo only.</b> Use fictional test values only. These fields are checked in your browser and are never sent to or saved in the database. The selected payment method is saved with the order; no payment is processed. Never enter real account/card details, passwords, PINs, or OTPs.</p>
+          <p id="demoPaymentDescription" class="muted"></p>
+          <div id="walletDemoFields" class="demo-payment-group" hidden>
             <label for="walletDemoName">Demo account name</label>
             <input id="walletDemoName" maxlength="80" autocomplete="off" placeholder="Sample name">
             <label for="walletDemoAccount">Demo mobile number or email</label>
-            <input id="walletDemoAccount" maxlength="120" autocomplete="off" placeholder="Example only (e.g. 09XXXXXXXXX)">
+            <input id="walletDemoAccount" maxlength="120" autocomplete="off" placeholder="Fictional test value">
           </div>
-          <div id="bankDemoFields" hidden>
-            <label for="bankDemoName">Demo account holder name</label>
+          <div id="bankDemoFields" class="demo-payment-group" hidden>
+            <label for="bankDemoName">Demo account name</label>
             <input id="bankDemoName" maxlength="80" autocomplete="off" placeholder="Sample name">
-            <label for="bankDemoAccount">Demo account number</label>
-            <input id="bankDemoAccount" maxlength="24" autocomplete="off" inputmode="numeric" placeholder="Test value only">
+            <label for="bankDemoAccount">Demo bank account number</label>
+            <input id="bankDemoAccount" maxlength="20" autocomplete="off" inputmode="numeric" placeholder="Fictional test number">
           </div>
-          <div id="cardDemoFields" hidden>
+          <div id="cardDemoFields" class="demo-payment-group" hidden>
             <label for="cardDemoName">Name on demo card</label>
             <input id="cardDemoName" maxlength="80" autocomplete="off" placeholder="SAMPLE CUSTOMER">
             <label for="cardDemoNumber">Demo card number</label>
-            <input id="cardDemoNumber" maxlength="23" autocomplete="off" inputmode="numeric" placeholder="Use a made-up test number">
+            <input id="cardDemoNumber" maxlength="23" autocomplete="off" inputmode="numeric" placeholder="Fictional 12–19 digit number">
             <div class="demo-card-row">
               <div><label for="cardDemoExpiry">Expiry date</label><input id="cardDemoExpiry" maxlength="5" autocomplete="off" inputmode="numeric" placeholder="MM/YY"></div>
-              <div><label for="cardDemoCvv">Security code</label><input id="cardDemoCvv" maxlength="4" autocomplete="off" inputmode="numeric" placeholder="123"></div>
+              <div><label for="cardDemoCvv">CVV (test value)</label><input id="cardDemoCvv" maxlength="4" autocomplete="off" inputmode="numeric" placeholder="3–4 digits"></div>
             </div>
           </div>
-          <p class="muted payment-safety">This is a visual/validation demo only. Never enter real card, wallet, or bank information.</p>
+          <p class="muted payment-safety">Press “Simulate Payment &amp; Place Order” to continue the demo. This does not transfer money.</p>
         </div>
 
         <h4>Voucher or Discount</h4>

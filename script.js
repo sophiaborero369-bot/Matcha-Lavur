@@ -644,6 +644,12 @@ function checkoutPayment() {
 function renderCheckout() {
   const empty = !me.cart.length; $('#coEmpty').hidden = !empty; $('#coWrap').hidden = empty; if (empty) return;
   const delivery = deliveryDetails();
+  const deliveryArea = $('#coDeliveryArea').value;
+  $('#coDeliveryAreaField').hidden = delivery.pickup;
+  $('#coDeliveryArea').required = !delivery.pickup;
+  $('#coAreaHint').textContent = deliveryArea === 'davao'
+    ? 'Drinks, sweets, powder and merchandise. Delivery in minutes.'
+    : 'Powder and merchandise only. Delivery in 2–4 days.';
   const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
   const cashDelivery = $('#paymentOptions [data-payment-fulfillment="delivery"]');
   const cashPickup = $('#paymentOptions [data-payment-fulfillment="pickup"]');
@@ -654,15 +660,15 @@ function renderCheckout() {
   }
   const selectedPayment = val('payment_method');
   const payment = checkoutPayment();
-  const isWallet = payment.demo === 'wallet';
-  const isBank = payment.demo === 'bank';
-  const isCard = payment.demo === 'card';
   $('#walletOptions').hidden = selectedPayment !== 'E-wallet';
   $('#bankOptions').hidden = selectedPayment !== 'Online Banking';
   const otherBank = selectedPayment === 'Online Banking' && $('#bankProvider').value === 'Other';
   $('#otherBankField').hidden = !otherBank;
   $('#otherBankName').required = otherBank;
   $('#demoPaymentFields').hidden = !payment.demo;
+  const isWallet = payment.demo === 'wallet';
+  const isBank = payment.demo === 'bank';
+  const isCard = payment.demo === 'card';
   $('#walletDemoFields').hidden = !isWallet;
   $('#bankDemoFields').hidden = !isBank;
   $('#cardDemoFields').hidden = !isCard;
@@ -674,6 +680,9 @@ function renderCheckout() {
   $('#cardDemoNumber').required = isCard;
   $('#cardDemoExpiry').required = isCard;
   $('#cardDemoCvv').required = isCard;
+  $('#demoPaymentDescription').textContent = payment.demo
+    ? `${payment.method}${payment.bankName ? ` (${payment.bankName})` : ''} selected. This project will simulate the payment result.`
+    : '';
   $('#coForm button[type="submit"], #coForm button:not([type])').textContent = payment.demo ? 'Simulate Payment & Place Order' : 'Place Order';
   $('#deliveryFee').textContent = delivery.pickup ? 'Free' : peso(delivery.fee);
   $('#deliveryHint').textContent = delivery.isDavao
@@ -706,20 +715,24 @@ $('#coForm').onsubmit = async e => {
   e.preventDefault(); const err = $('#coErr'); err.textContent = '';
   const delivery = deliveryDetails();
   if (!delivery.isDavao && delivery.hasFreshItems) return err.textContent = 'Drinks and sweets are only available for Davao City customers. Remove those items to continue.';
+  if (!delivery.pickup && (($('#coDeliveryArea').value === 'davao') !== delivery.isDavao)) {
+    return err.textContent = 'Choose a delivery area that matches the city in your complete address.';
+  }
   if (!/^09\d{9}$/.test($('#coPhone').value.trim())) return err.textContent = 'Enter a valid 11-digit contact number starting with 09.';
   const payment = checkoutPayment();
   if (payment.demo === 'wallet' && (!$('#walletDemoName').value.trim() || !$('#walletDemoAccount').value.trim())) {
-    return err.textContent = 'Enter sample wallet account details to continue the demo.';
+    return err.textContent = 'Enter fictional test wallet details to continue the demo.';
   }
-  if (payment.demo === 'bank' && (!$('#bankDemoName').value.trim() || !$('#bankDemoAccount').value.trim() || (payment.method === 'Other Online Banking' && !payment.bankName))) {
-    return err.textContent = 'Enter sample bank account details to continue the demo.';
+  if (payment.demo === 'bank' && (!$('#bankDemoName').value.trim() || !/^\d{8,20}$/.test($('#bankDemoAccount').value.trim()))) {
+    return err.textContent = 'Enter a sample account name and an 8–20 digit fictional bank number.';
   }
   if (payment.demo === 'card') {
     const cardNumber = $('#cardDemoNumber').value.replace(/\D/g, '');
     const expiry = $('#cardDemoExpiry').value.trim();
     const cvv = $('#cardDemoCvv').value.trim();
-    if (!$('#cardDemoName').value.trim() || cardNumber.length < 12 || cardNumber.length > 19 || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry) || !/^\d{3,4}$/.test(cvv)) {
-      return err.textContent = 'Enter valid-looking test card values (name, 12–19 digits, MM/YY, and 3–4 digit code). Do not use a real card.';
+    if (!$('#cardDemoName').value.trim() || !/^\d{12,19}$/.test(cardNumber) ||
+        !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry) || !/^\d{3,4}$/.test(cvv)) {
+      return err.textContent = 'Enter fictional test values: name, 12–19 digit number, MM/YY expiry, and 3–4 digit CVV. Never use a real card.';
     }
   }
   const orderNote = [
@@ -761,7 +774,8 @@ $('#coForm').onsubmit = async e => {
   $('#coNote').value = '';
   $('#walletDemoName').value = ''; $('#walletDemoAccount').value = '';
   $('#bankDemoName').value = ''; $('#bankDemoAccount').value = '';
-  $('#cardDemoName').value = ''; $('#cardDemoNumber').value = ''; $('#cardDemoExpiry').value = ''; $('#cardDemoCvv').value = '';
+  $('#cardDemoName').value = ''; $('#cardDemoNumber').value = '';
+  $('#cardDemoExpiry').value = ''; $('#cardDemoCvv').value = '';
   toast(payment.demo ? 'Demo payment simulated. No money was transferred.' : 'Order placed!');
   orderTab = 'To Ship';
   go('mypurchase');
