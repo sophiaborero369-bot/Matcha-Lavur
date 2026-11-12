@@ -276,3 +276,21 @@ nav button:hover,nav button.active{background:#ffffff33;text-shadow:0 0 8px #d5f
 .about-text,.rsum,.prod,.owner-card,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row{border:0}
 .ph{border-color:var(--g2);box-shadow:none}
 input:focus,select:focus,textarea:focus{border-color:var(--g);box-shadow:none}
+
+/* ===== SOFT NEON + 3D DETAILS ===== */
+header{box-shadow:0 2px 0 #9dffbd88,0 5px 18px #2e9e6b35}
+nav button:hover,nav button.active{box-shadow:0 0 12px #9dffbd55,inset 0 0 0 1px #ffffff55}
+.title::before{box-shadow:0 0 8px #ff7eb655,0 0 14px #9dffbd66}
+.hero{transform:perspective(1200px) rotateX(.4deg);box-shadow:0 14px 28px #1f4d3a20,0 0 0 1px #9dffbd55,0 0 22px #70f09a30;transition:transform .3s ease,box-shadow .3s ease}
+.hero:hover{transform:perspective(1200px) translateY(-4px) rotateX(.4deg);box-shadow:0 20px 34px #1f4d3a28,0 0 0 1px #9dffbd88,0 0 28px #70f09a55}
+.card,.prod,.vcard,.flip .front,.flip .back,.owner-card,.about-text,.rsum,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row,.gallery figure{transition:transform .25s ease,box-shadow .25s ease}
+.card,.prod,.vcard,.flip .front,.flip .back,.owner-card,.about-text,.rsum,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row,.gallery figure{box-shadow:0 8px 18px #1f4d3a20,0 0 0 1px #9dffbd4d}
+.card:hover,.prod:hover,.vcard:hover,.owner-card:hover,.about-text:hover,.rsum:hover,.rv:hover,.stat:hover,.order:hover,.cart-row:hover,.mini div:hover,.chat:hover,.faq-i:hover,.stock-row:hover,.gallery figure:hover{transform:translateY(-4px);box-shadow:0 14px 24px #1f4d3a25,0 0 0 1px #7bd88f99,0 0 16px #9dffbd55}
+.flip .front,.flip .back{box-shadow:0 10px 20px #1f4d3a25,0 0 0 1px #9dffbd66}
+.btn:not(.ghost){box-shadow:0 5px 0 #176c4b,0 8px 16px #2e9e6b38}
+.btn:not(.ghost):hover,.btn:not(.ghost):focus-visible{transform:translateY(-3px);box-shadow:0 7px 0 #176c4b,0 0 14px #9dffbd99,0 10px 20px #2e9e6b44}
+.btn:not(.ghost):active{transform:translateY(1px);box-shadow:0 2px 0 #176c4b,0 4px 8px #2e9e6b33}
+.btn.ghost:hover,.btn.ghost:focus-visible{box-shadow:0 0 12px #7bd88f77}
+#musicToggle{box-shadow:0 0 10px #9dffbd66}
+#backToTop{box-shadow:0 4px 0 #176c4b,0 0 14px #9dffbd77,0 7px 14px #1f4d3a25}
+@media(prefers-reduced-motion:reduce){.hero,.card,.prod,.vcard,.flip .front,.flip .back,.owner-card,.about-text,.rsum,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row,.gallery figure,.btn:not(.ghost){transition:none}.hero:hover,.card:hover,.prod:hover,.vcard:hover,.owner-card:hover,.about-text:hover,.rsum:hover,.rv:hover,.stat:hover,.order:hover,.cart-row:hover,.mini div:hover,.chat:hover,.faq-i:hover,.stock-row:hover,.gallery figure:hover,.btn:not(.ghost):hover,.btn:not(.ghost):focus-visible{transform:none}}
