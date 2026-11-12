@@ -1,4 +1,4 @@
-:root{--g:#2e9e6b;--g2:#7bd88f;--dark:#1f4d3a;--pink:#ff7eb6;--yellow:#ffd23f;--purple:#8e6bff;--bg:#f2fbf3;--surface:#eff8ef;--r:16px;--neon:#9dffbd}
+:root{--g:#2e9e6b;--g2:#7bd88f;--dark:#1f4d3a;--pink:#ff7eb6;--yellow:#ffd23f;--purple:#8e6bff;--bg:#1f6b4a;--surface:#eff8ef;--r:16px;--neon:#9dffbd}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:#23332b;line-height:1.5}
 [hidden]{display:none!important}
@@ -257,14 +257,14 @@ footer{text-align:center;padding:20px;background:var(--dark);color:#d8f5e0;font-
 .img-card .modal-actions{justify-content:center}
 
 /* ===== MATCHA NEON FINISH ===== */
-body{color:#f3fff5;background-color:#0b2117;background-image:radial-gradient(ellipse at 50% 25%,#17472d 0%,transparent 58%),radial-gradient(ellipse at 8% 18%,#0b3824 0%,transparent 38%),radial-gradient(ellipse at 92% 78%,#103522 0%,transparent 42%),linear-gradient(145deg,#071b13,#0b261a 52%,#071a12);background-attachment:fixed}
+body{color:#23332b;background-color:#1f6b4a;background-image:radial-gradient(ellipse at 12% 18%,#7df5ab25,transparent 38%),radial-gradient(ellipse at 88% 72%,#9dffbd20,transparent 42%),linear-gradient(135deg,#0f3d2b,#1f6b4a 55%,#2e9e6b);background-attachment:fixed}
 main{position:relative}
 .card,.about-text,.video-desc,.gallery figure,.prod,.rsum,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row,.flip .front{color:#23332b}
 .title,.sec-h{color:#f3fff5;text-shadow:0 0 10px #69f99a77,0 1px 2px #04140c}
 .title::before{background:linear-gradient(180deg,var(--pink),#b6ff78 55%,#52ffc2);box-shadow:0 0 9px #8cffae,0 0 20px #58ef9188}
-header{background:linear-gradient(110deg,#176c4b,#2e9e6b 38%,#48bc79 62%,#7bd88f 100%);box-shadow:0 4px 14px #0003}
+header{background:linear-gradient(110deg,#06452f,#087c4e 38%,#18a968 68%,#73d94f);box-shadow:0 2px 0 #9dffbd88,0 5px 18px #2e9e6b55}
 .brand,nav button,.user,.profile-btn,#musicToggle{color:#fff}
-nav button:hover,nav button.active{background:#ffffff33;text-shadow:0 0 8px #d5ffe2}
+nav button:hover,nav button.active{background:#ffffff2e;box-shadow:inset 0 0 0 1px #a9ffc277,0 0 12px #75ffa044;text-shadow:0 0 8px #d5ffe2}
 #musicToggle,.profile-btn{background:#ffffff26}
 #musicToggle:hover,#musicToggle:focus-visible,.profile-btn:hover{background:#ffffff40}
 .btn:not(.ghost){border:0;box-shadow:0 4px 12px #2e9e6b44}
@@ -278,14 +278,14 @@ nav button:hover,nav button.active{background:#ffffff33;text-shadow:0 0 8px #d5f
 input:focus,select:focus,textarea:focus{border-color:var(--g);box-shadow:none}
 
 /* ===== SOFT NEON + 3D DETAILS ===== */
-header{box-shadow:0 2px 0 #9dffbd88,0 5px 18px #2e9e6b35}
-nav button:hover,nav button.active{box-shadow:0 0 12px #9dffbd55,inset 0 0 0 1px #ffffff55}
+header{box-shadow:0 2px 0 #9dffbd88,0 5px 18px #2e9e6b55}
+nav button:hover,nav button.active{box-shadow:0 0 12px #9dffbd66,inset 0 0 0 1px #a9ffc277}
 .title::before{box-shadow:0 0 8px #ff7eb655,0 0 14px #9dffbd66}
-.hero{transform:perspective(1200px) rotateX(.4deg);box-shadow:0 14px 28px #1f4d3a20,0 0 0 1px #9dffbd55,0 0 22px #70f09a30;transition:transform .3s ease,box-shadow .3s ease}
-.hero:hover{transform:perspective(1200px) translateY(-4px) rotateX(.4deg);box-shadow:0 20px 34px #1f4d3a28,0 0 0 1px #9dffbd88,0 0 28px #70f09a55}
+.hero{transform:perspective(1200px) rotateX(.4deg);box-shadow:0 14px 28px #1f4d3a20,0 0 0 1px #48f29299,0 0 26px #36ee8a77,0 0 48px #28c96b66;transition:transform .3s ease,box-shadow .3s ease}
+.hero:hover{transform:perspective(1200px) translateY(-4px) rotateX(.4deg);box-shadow:0 20px 34px #1f4d3a28,0 0 0 2px #9dffbd,0 0 28px #36ef8c,0 0 48px #28c96b66}
 .card,.prod,.vcard,.flip .front,.flip .back,.owner-card,.about-text,.rsum,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row,.gallery figure{transition:transform .25s ease,box-shadow .25s ease}
-.card,.prod,.vcard,.flip .front,.flip .back,.owner-card,.about-text,.rsum,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row,.gallery figure{box-shadow:0 8px 18px #1f4d3a20,0 0 0 1px #9dffbd4d}
-.card:hover,.prod:hover,.vcard:hover,.owner-card:hover,.about-text:hover,.rsum:hover,.rv:hover,.stat:hover,.order:hover,.cart-row:hover,.mini div:hover,.chat:hover,.faq-i:hover,.stock-row:hover,.gallery figure:hover{transform:translateY(-4px);box-shadow:0 14px 24px #1f4d3a25,0 0 0 1px #7bd88f99,0 0 16px #9dffbd55}
+.card,.prod,.vcard,.flip .front,.flip .back,.owner-card,.about-text,.rsum,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row,.gallery figure{box-shadow:0 8px 18px #1f4d3a20,0 0 0 1px #8cffae77,0 0 14px #31db7725}
+.card:hover,.prod:hover,.vcard:hover,.owner-card:hover,.about-text:hover,.rsum:hover,.rv:hover,.stat:hover,.order:hover,.cart-row:hover,.mini div:hover,.chat:hover,.faq-i:hover,.stock-row:hover,.gallery figure:hover{transform:translateY(-4px);box-shadow:0 14px 24px #1f4d3a25,0 0 0 1px #7bd88f,0 0 20px #58ef9177}
 .flip .front,.flip .back{box-shadow:0 10px 20px #1f4d3a25,0 0 0 1px #9dffbd66}
 .btn:not(.ghost){box-shadow:0 5px 0 #176c4b,0 8px 16px #2e9e6b38}
 .btn:not(.ghost):hover,.btn:not(.ghost):focus-visible{transform:translateY(-3px);box-shadow:0 7px 0 #176c4b,0 0 14px #9dffbd99,0 10px 20px #2e9e6b44}
