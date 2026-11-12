@@ -1,4 +1,4 @@
-:root{--g:#2e9e6b;--g2:#7bd88f;--dark:#1f4d3a;--pink:#ff7eb6;--yellow:#ffd23f;--purple:#8e6bff;--bg:#f2fbf3;--r:16px;--neon:#9dffbd}
+:root{--g:#2e9e6b;--g2:#7bd88f;--dark:#1f4d3a;--pink:#ff7eb6;--yellow:#ffd23f;--purple:#8e6bff;--bg:#f4f3e8;--r:16px;--neon:#9dffbd}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:#23332b;line-height:1.5}
 [hidden]{display:none!important}
@@ -257,7 +257,7 @@ footer{text-align:center;padding:20px;background:var(--dark);color:#d8f5e0;font-
 .img-card .modal-actions{justify-content:center}
 
 /* ===== MATCHA NEON FINISH ===== */
-body{color:#23332b;background-color:#d3ea7a;background-image:radial-gradient(ellipse at 10% 12%,#f8efc733,transparent 34%),radial-gradient(ellipse at 88% 28%,#f3c9b51a,transparent 30%),radial-gradient(ellipse at 50% 90%,#b5cd8a33,transparent 38%),linear-gradient(145deg,#d3ea7a,#cde474 52%,#d3ea7a);background-attachment:fixed}
+body{color:#23332b;background-color:#f4f3e8;background-image:radial-gradient(circle at 1px 1px,#1f8a5b2b 1px,transparent 1.5px),radial-gradient(ellipse at 8% 18%,#62f2a866,transparent 32%),radial-gradient(ellipse at 92% 24%,#ff7eb645,transparent 30%),radial-gradient(ellipse at 52% 88%,#83f5c155,transparent 38%),repeating-linear-gradient(135deg,transparent 0 60px,#2e9e6b0a 60px 61px,transparent 61px 120px),linear-gradient(145deg,#f7f6ef,#edf2e7 52%,#f5f1e8);background-size:28px 28px,auto,auto,auto,auto,auto;background-attachment:fixed}
 main{position:relative}
 .title,.sec-h{color:#1f4d3a;text-shadow:0 1px 2px #f4f4d877}
 .title::before{background:linear-gradient(180deg,#ff7eb6,#b6ff78 55%,#52ffc2);box-shadow:0 0 9px #8cffae,0 0 20px #58ef9188}
