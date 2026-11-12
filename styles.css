@@ -1,4 +1,4 @@
-:root{--g:#2e9e6b;--g2:#7bd88f;--dark:#1f4d3a;--pink:#ff7eb6;--yellow:#ffd23f;--purple:#8e6bff;--bg:#f4f3e8;--r:16px;--neon:#9dffbd}
+:root{--g:#2e9e6b;--g2:#7bd88f;--dark:#1f4d3a;--pink:#ff7eb6;--yellow:#ffd23f;--purple:#8e6bff;--bg:#0b2117;--r:16px;--neon:#9dffbd}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:#23332b;line-height:1.5}
 [hidden]{display:none!important}
@@ -257,19 +257,20 @@ footer{text-align:center;padding:20px;background:var(--dark);color:#d8f5e0;font-
 .img-card .modal-actions{justify-content:center}
 
 /* ===== MATCHA NEON FINISH ===== */
-body{color:#23332b;background-color:#f4f3e8;background-image:radial-gradient(circle at 1px 1px,#1f8a5b2b 1px,transparent 1.5px),radial-gradient(ellipse at 8% 18%,#62f2a866,transparent 32%),radial-gradient(ellipse at 92% 24%,#ff7eb645,transparent 30%),radial-gradient(ellipse at 52% 88%,#83f5c155,transparent 38%),repeating-linear-gradient(135deg,transparent 0 60px,#2e9e6b0a 60px 61px,transparent 61px 120px),linear-gradient(145deg,#f7f6ef,#edf2e7 52%,#f5f1e8);background-size:28px 28px,auto,auto,auto,auto,auto;background-attachment:fixed}
+body{color:#f3fff5;background-color:#0b2117;background-image:radial-gradient(ellipse at 50% 28%,#17472d 0%,transparent 58%),radial-gradient(ellipse at 8% 16%,#0b3824 0%,transparent 38%),radial-gradient(ellipse at 92% 72%,#103522 0%,transparent 42%),repeating-linear-gradient(135deg,transparent 0 72px,#74f5a00a 72px 73px,transparent 73px 144px),linear-gradient(145deg,#071b13,#0b261a 52%,#071a12);background-size:auto,auto,auto,auto,auto;background-attachment:fixed}
 main{position:relative}
-.title,.sec-h{color:#1f4d3a;text-shadow:0 1px 2px #f4f4d877}
+.card,.about-text,.video-desc,.gallery figure,.prod,.rsum,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row,.flip .front{color:#23332b}
+.title,.sec-h{color:#f3fff5;text-shadow:0 0 10px #69f99a77,0 1px 2px #04140c}
 .title::before{background:linear-gradient(180deg,#ff7eb6,#b6ff78 55%,#52ffc2);box-shadow:0 0 9px #8cffae,0 0 20px #58ef9188}
-header{background:linear-gradient(110deg,#c7e073,#d3ea7a 50%,#cde474);box-shadow:0 2px 0 #e5f3ad,0 4px 18px #526b3233}
-.brand,nav button,.user,.profile-btn,#musicToggle{color:#1f4d3a}
-nav button:hover,nav button.active{background:#78925e26;box-shadow:inset 0 0 0 1px #78925e55;text-shadow:0 1px 2px #f4f4d8}
-#musicToggle,.profile-btn{background:#78925e20}
-#musicToggle:hover,#musicToggle:focus-visible,.profile-btn:hover{background:#78925e38}
+header{background:linear-gradient(110deg,#06452f,#087c4e 38%,#18a968 68%,#73d94f);box-shadow:0 2px 0 #83f7a8,0 4px 18px #35f28b44}
+.brand,nav button,.user,.profile-btn,#musicToggle{color:#fff}
+nav button:hover,nav button.active{background:#ffffff2e;box-shadow:inset 0 0 0 1px #a9ffc277,0 0 16px #75ffa044;text-shadow:0 0 8px #d5ffe2}
+#musicToggle,.profile-btn{background:#ffffff26}
+#musicToggle:hover,#musicToggle:focus-visible,.profile-btn:hover{background:#ffffff40}
 .btn:not(.ghost){border:1px solid #b5ffca88;box-shadow:0 0 8px #46ed8b88,0 0 18px #28c96b55,inset 0 1px 0 #ffffff66,0 5px 14px #07170f66}
 .btn:not(.ghost):hover,.btn:not(.ghost):focus-visible{box-shadow:0 0 0 2px #c7ffd7,0 0 12px #fff,0 0 30px #4cff91,0 0 52px #22d66a88}
 .btn.ghost{border-color:#39c979;color:#087447;box-shadow:0 0 8px #39c97966}
-.hero{border:1px solid #c0ffcf;background:linear-gradient(90deg,#f1ffe8f0 0%,#e8ffe5bb 44%,#e8ffe500 82%),url("hero.jpg") center/cover no-repeat,linear-gradient(135deg,#c9f7d2,#fff3b0 55%,#ffd1e6);box-shadow:0 0 0 1px #48f29277,0 0 18px #36ee8a88,0 0 52px #28c96b55,0 16px 38px #0007}
+.hero{border:1px solid #a6ffc2;background:linear-gradient(90deg,#e9ffe8f0 0%,#e3ffe5bb 44%,#e3ffe500 82%),url("hero.jpg") center/cover no-repeat,linear-gradient(135deg,#c9f7d2,#fff3b0 55%,#ffd1e6);box-shadow:0 0 0 1px #48f29277,0 0 18px #36ee8a66,0 0 36px #28c96b44,0 16px 38px #0007}
 .hero:hover{box-shadow:0 0 0 2px #c7ffd7,0 0 20px #fff,0 0 48px #36ef8c,0 18px 42px #0009}
 .vcard,.flip .front,.owner-card,.about-text,.rsum,.prod,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row{filter:drop-shadow(0 0 7px #46ed8b32)}
 .vcard:hover,.owner-card:hover,.prod:hover,.cart-row:hover,.mini div:hover{filter:drop-shadow(0 0 9px #46ed8b99)}
