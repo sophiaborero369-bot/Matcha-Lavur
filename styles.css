@@ -99,10 +99,27 @@ footer{text-align:center;padding:20px;background:var(--dark);color:#d8f5e0;font-
 .flip.on .front{transform:rotateY(-180deg)}.flip.on .back{transform:rotateY(0)}
 
 /* owner and seller */
-.about{display:grid;grid-template-columns:1fr 1fr 1.7fr;align-items:start;gap:16px}
+.about{display:grid;grid-template-columns:2.2fr 1.7fr;align-items:start;gap:16px}
+.about-people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:12px}
 .owner-card{position:relative;align-self:start;border-radius:var(--r);overflow:hidden;box-shadow:0 8px 22px #1f4d3a22}.owner{height:340px;border:0;border-radius:0}
 .owner-card figcaption{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:30px 16px 14px;color:#fff;background:linear-gradient(transparent,#0f3d2bdd);display:flex;flex-direction:column}
 .owner-card em{font-style:normal;font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--yellow)}
+.contact-card{grid-column:1/-1;padding:18px;border:1px solid #b5e5c4;border-radius:var(--r);background:linear-gradient(135deg,#eff8ef,#e3f5e8);box-shadow:0 8px 18px #1f4d3a20,0 0 0 1px #8cffae77,0 0 14px #31db7725}
+.contact-card h4{margin:8px 0 12px;color:var(--dark);font-size:1.15rem}
+.contact-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.contact-item{display:flex;align-items:center;gap:10px;min-width:0;padding:10px;border:1px solid #d8efdf;border-radius:12px;background:#fff;color:var(--dark);text-decoration:none}
+a.contact-item{transition:transform .2s,box-shadow .2s}
+a.contact-item:hover,a.contact-item:focus-visible{transform:translateY(-2px);box-shadow:0 5px 14px #1f4d3a1c}
+.contact-item:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.contact-item>span:last-child{min-width:0}
+.contact-item small{display:block;color:#6b7f74;font-size:.75rem}
+.contact-item b{display:block;overflow-wrap:anywhere;font-size:.88rem}
+.contact-icon{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:50%;background:#e3f5e8;color:var(--g)}
+.contact-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.facebook-icon{background:#e8f0ff;color:#1877f2}
+.facebook-icon svg{fill:currentColor;stroke:none}
+.instagram-icon{background:#fff0f6;color:#c13584}
+.instagram-icon .instagram-dot{fill:currentColor;stroke:none}
 .about-text{background:#fff;padding:24px;border-radius:var(--r);box-shadow:0 6px 16px #1f4d3a12;border-top:6px solid var(--g2);display:flex;flex-direction:column;gap:10px}
 .about-text h4{font-size:1.25rem;color:var(--dark)}
 .vals{display:flex;gap:8px;flex-wrap:wrap}.vals span{background:#e3f5e8;color:var(--dark);padding:4px 14px;border-radius:999px;font-size:.85rem;font-weight:600}
@@ -247,6 +264,7 @@ footer{text-align:center;padding:20px;background:var(--dark);color:#d8f5e0;font-
 
 @media(max-width:1100px){.bar{flex-wrap:wrap}nav{order:3;width:100%;overflow-x:auto;justify-content:flex-start}.user{margin-left:auto}}
 @media(max-width:850px){.about,.review-layout,.checkout,.support,.cart-layout{grid-template-columns:1fr}.hero{padding:26px;min-height:340px}.hero h2{font-size:1.9rem}.summary,.cart-sum,#reviewForm{position:static}.cart-row{grid-template-columns:70px 1fr}.cart-row .ph{width:70px;height:70px}.cart-end{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center;width:100%}.rv{flex-direction:column}.rsum{grid-template-columns:1fr}.owner{height:260px}}
+@media(max-width:550px){.about-people,.contact-list{grid-template-columns:1fr}}
 @keyframes neon-header{from{background-position:0% 50%}to{background-position:100% 50%}}
 @keyframes neon-pulse{50%{box-shadow:0 0 7px #fff,0 0 22px #9dffbd,0 0 34px #58ef9188}}
 @keyframes neon-sweep{0%,55%{left:-55%}90%,100%{left:125%}}
