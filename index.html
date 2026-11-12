@@ -381,59 +381,6 @@
     <div><small class="muted">Store owner</small><b id="ownerName"></b><span id="ownerEmail" class="muted"></span></div>
     <button class="btn small ghost" id="ownerEditProfile" type="button">Edit Profile</button>
   </div>
-  <h4 class="sec-h">Storefront Content</h4>
-  <details class="card content-editor" id="storefrontEditor">
-    <summary>Edit website content</summary>
-    <p class="muted">Changes are saved for all visitors. Images must be JPG, PNG, GIF or WebP; videos must be MP4 or WebM, up to 100 MB.</p>
-    <form id="storefrontForm">
-      <div class="content-editor-grid">
-        <section class="content-editor-section">
-          <h5>Website name and logo</h5>
-          <label>Store title<input data-setting="brandTitle" maxlength="80" required></label>
-          <label>Logo image<input type="file" data-asset-key="logoUrl" accept="image/jpeg,image/png,image/webp,image/gif"><img class="content-preview logo-preview" data-storefront-image data-asset-preview="logoUrl" alt="Current store logo"></label>
-        </section>
-        <section class="content-editor-section">
-          <h5>Owner and seller photos</h5>
-          <label>Owner photo<input type="file" data-asset-key="ownerPhoto" accept="image/jpeg,image/png,image/webp,image/gif"><img class="content-preview" data-storefront-image data-asset-preview="ownerPhoto" alt="Current owner photo"></label>
-          <label>Seller photo<input type="file" data-asset-key="sellerPhoto" accept="image/jpeg,image/png,image/webp,image/gif"><img class="content-preview" data-storefront-image data-asset-preview="sellerPhoto" alt="Current seller photo"></label>
-        </section>
-        <section class="content-editor-section">
-          <h5>Store schedule and contact</h5>
-          <fieldset class="schedule-days"><legend>Open days</legend>
-            <label><input type="checkbox" name="openDays" value="0"> Sun</label><label><input type="checkbox" name="openDays" value="1"> Mon</label>
-            <label><input type="checkbox" name="openDays" value="2"> Tue</label><label><input type="checkbox" name="openDays" value="3"> Wed</label>
-            <label><input type="checkbox" name="openDays" value="4"> Thu</label><label><input type="checkbox" name="openDays" value="5"> Fri</label>
-            <label><input type="checkbox" name="openDays" value="6"> Sat</label>
-          </fieldset>
-          <div class="content-inline"><label>Opens<input type="time" data-setting="openTime" required></label><label>Closes<input type="time" data-setting="closeTime" required></label></div>
-          <label>Location<input data-setting="location" maxlength="240" required></label>
-          <label>Phone<input type="tel" data-setting="phone" maxlength="40" required></label>
-          <label>Email<input type="email" data-setting="email" maxlength="120" required></label>
-          <label>Facebook URL<input type="url" data-setting="facebookUrl" maxlength="300" placeholder="https://facebook.com/your-page"></label>
-          <label>Instagram URL<input type="url" data-setting="instagramUrl" maxlength="300" placeholder="https://instagram.com/your-account"></label>
-        </section>
-        <section class="content-editor-section">
-          <h5>Commercial video</h5>
-          <label>Video file<input type="file" data-asset-key="commercialVideo" accept="video/mp4,video/webm"></label>
-          <label>Video poster image<input type="file" data-asset-key="commercialPoster" accept="image/jpeg,image/png,image/webp,image/gif"><img class="content-preview" data-storefront-image data-asset-preview="commercialPoster" alt="Current video poster"></label>
-        </section>
-      </div>
-      <section class="content-editor-section">
-        <div class="content-editor-heading"><h5>Vouchers</h5><button class="btn small ghost" type="button" data-add-promo="voucher">Add Voucher</button></div>
-        <div id="voucherEditorRows" class="promo-editor-rows"></div>
-      </section>
-      <section class="content-editor-section">
-        <div class="content-editor-heading"><h5>Discounts</h5><button class="btn small ghost" type="button" data-add-promo="discount">Add Discount</button></div>
-        <div id="discountEditorRows" class="promo-editor-rows"></div>
-      </section>
-      <section class="content-editor-section">
-        <div class="content-editor-heading"><div><h5>Photo gallery</h5><p class="muted">Add, remove or update gallery photos and captions.</p></div><button class="btn small ghost" type="button" id="addGalleryItem">Add Photo</button></div>
-        <div id="galleryEditorRows" class="gallery-editor-rows"></div>
-      </section>
-      <button class="btn" type="submit" id="saveStorefront">Save Website Changes</button>
-      <p class="ok" id="storefrontSaveMessage" role="status"></p>
-    </form>
-  </details>
   <h4 class="sec-h">Sales Overview</h4>
   <div class="stats" id="ownerStats"></div>
   <h4 class="sec-h">Sales by Product</h4>
