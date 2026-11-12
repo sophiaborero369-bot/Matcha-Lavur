@@ -256,12 +256,12 @@ footer{text-align:center;padding:20px;background:var(--dark);color:#d8f5e0;font-
 .img-full{height:min(60vh,480px);border-radius:12px;background:#eefaf0 center/contain no-repeat;margin-bottom:10px}
 .img-card .modal-actions{justify-content:center}
 
-/* ===== MATCHA THEME FINISH ===== */
-body{color:#23332b;background-color:#f2fbf3;background-image:linear-gradient(145deg,#f4fbf4,#edf8ef 52%,#f2fbf3);background-attachment:fixed}
+/* ===== MATCHA NEON FINISH ===== */
+body{color:#f3fff5;background-color:#0b2117;background-image:radial-gradient(ellipse at 50% 25%,#17472d 0%,transparent 58%),radial-gradient(ellipse at 8% 18%,#0b3824 0%,transparent 38%),radial-gradient(ellipse at 92% 78%,#103522 0%,transparent 42%),linear-gradient(145deg,#071b13,#0b261a 52%,#071a12);background-attachment:fixed}
 main{position:relative}
 .card,.about-text,.video-desc,.gallery figure,.prod,.rsum,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row,.flip .front{color:#23332b}
-.title,.sec-h{color:var(--dark);text-shadow:none}
-.title::before{background:linear-gradient(var(--pink),var(--yellow));box-shadow:none}
+.title,.sec-h{color:#f3fff5;text-shadow:0 0 10px #69f99a77,0 1px 2px #04140c}
+.title::before{background:linear-gradient(180deg,var(--pink),#b6ff78 55%,#52ffc2);box-shadow:0 0 9px #8cffae,0 0 20px #58ef9188}
 header{background:linear-gradient(110deg,#176c4b,#2e9e6b 38%,#48bc79 62%,#7bd88f 100%);box-shadow:0 4px 14px #0003}
 .brand,nav button,.user,.profile-btn,#musicToggle{color:#fff}
 nav button:hover,nav button.active{background:#ffffff33;text-shadow:0 0 8px #d5ffe2}
@@ -270,8 +270,8 @@ nav button:hover,nav button.active{background:#ffffff33;text-shadow:0 0 8px #d5f
 .btn:not(.ghost){border:0;box-shadow:0 4px 12px #2e9e6b44}
 .btn:not(.ghost):hover,.btn:not(.ghost):focus-visible{box-shadow:0 0 0 2px #9dffbd99,0 0 22px #58ef91a0,0 4px 18px #2e9e6b66}
 .btn.ghost{border-color:var(--g);color:var(--g);box-shadow:none}
-.hero{border:1px solid #b5f7c788;background:linear-gradient(90deg,#eefbe6e6 0%,#eefbe6aa 45%,#eefbe600 80%),url("hero.jpg") center/cover no-repeat,linear-gradient(135deg,#c9f7d2,#fff3b0 55%,#ffd1e6);box-shadow:0 10px 30px #1f4d3a22,0 0 22px #70f09a35}
-.hero:hover{box-shadow:0 12px 34px #1f4d3a2a,0 0 0 1px #9dffbd99,0 0 28px #70f09a55}
+.hero{border:1px solid #a6ffc2;background:linear-gradient(90deg,#e9ffe8f0 0%,#e3ffe5bb 44%,#e3ffe500 82%),url("hero.jpg") center/cover no-repeat,linear-gradient(135deg,#c9f7d2,#fff3b0 55%,#ffd1e6);box-shadow:0 0 0 1px #48f29277,0 0 18px #36ee8a88,0 0 42px #28c96b55,0 16px 38px #0007}
+.hero:hover{box-shadow:0 0 0 2px #c7ffd7,0 0 20px #fff,0 0 42px #36ef8c,0 18px 42px #0009}
 .vcard,.flip .front,.owner-card,.about-text,.rsum,.prod,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row{filter:none}
 .about-text,.rsum,.prod,.owner-card,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row{border:0}
 .ph{border-color:var(--g2);box-shadow:none}
@@ -294,3 +294,18 @@ nav button:hover,nav button.active{box-shadow:0 0 12px #9dffbd55,inset 0 0 0 1px
 #musicToggle{box-shadow:0 0 10px #9dffbd66}
 #backToTop{box-shadow:0 4px 0 #176c4b,0 0 14px #9dffbd77,0 7px 14px #1f4d3a25}
 @media(prefers-reduced-motion:reduce){.hero,.card,.prod,.vcard,.flip .front,.flip .back,.owner-card,.about-text,.rsum,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row,.gallery figure,.btn:not(.ghost){transition:none}.hero:hover,.card:hover,.prod:hover,.vcard:hover,.owner-card:hover,.about-text:hover,.rsum:hover,.rv:hover,.stat:hover,.order:hover,.cart-row:hover,.mini div:hover,.chat:hover,.faq-i:hover,.stock-row:hover,.gallery figure:hover,.btn:not(.ghost):hover,.btn:not(.ghost):focus-visible{transform:none}}
+#auth .auth-card{border-color:#9dffbd88;box-shadow:0 0 0 1px #9dffbd44,0 0 22px #58ef9155,0 24px 60px #00000055}
+#auth .logo-ph{box-shadow:0 0 0 2px #9dffbd88,0 0 16px #58ef9188}
+#auth .auth-card input:focus{box-shadow:0 0 0 3px #9dffbd99,0 0 14px #58ef9177}
+#auth .auth-card .btn{border:1px solid #d5ff9b;box-shadow:0 0 0 1px #b5ffca88,0 0 12px #9dffbd99,0 6px 18px #0004}
+#auth .auth-card .btn:hover,#auth .auth-card .btn:focus-visible{box-shadow:0 0 0 2px #e6ffc2,0 0 18px #b5ff8c,0 0 30px #58ef9188,0 7px 20px #0004}
+#auth .auth-card .tab:not(.active):hover,#auth .auth-card .tab:not(.active):focus-visible{box-shadow:0 0 12px #9dffbd77}
+#auth .auth-card .tab:not(.active){background:#ffffff38;color:#fff;text-shadow:0 1px 2px #164c35}
+#auth .auth-card .label-row a,#auth .auth-card .center-link{color:#fff3a6;text-shadow:0 1px 2px #164c35}
+#auth .auth-card .divider{color:#fff}
+#auth #cancelLogin{background:#f4fff5;color:#1f4d3a;text-shadow:none}
+#auth #cancelLogin:hover,#auth #cancelLogin:focus-visible{background:#fff;box-shadow:0 0 14px #9dffbd99}
+#authMsg.ok{color:#1f4d3a}
+.video-desc{background:#edf8ed;color:#1f4d3a;border-left-color:#7bd88f}
+.video-desc b{color:#1f4d3a}
+.video-desc p{color:#385347}
