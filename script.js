@@ -42,12 +42,12 @@ const PRODUCTS = [
 
 
 ];
-const VOUCHERS = [
+let VOUCHERS = [
   {code:'LAVUR50', label:'P50 off', type:'amt', val:50, min:300},
   {code:'WELCOME100', label:'P100 off', type:'amt', val:100, min:500},
   {code:'FREESHIP', label:'Free shipping', type:'ship', val:0, min:200}
 ];
-const DISCOUNTS = [
+let DISCOUNTS = [
   {code:'NEWOPEN10', label:'10% off (New Opening)', type:'pct', val:10, min:0},
   {code:'GRANDOPEN15', label:'15% off', type:'pct', val:15, min:600},
   {code:'MATCHA20', label:'20% off', type:'pct', val:20, min:1000}
@@ -55,6 +55,31 @@ const DISCOUNTS = [
 const SHIP = {std: 49, exp: 99};
 const DEMO_PAYMENT_METHODS = ['GCash', 'Maya', 'PayPal', 'Online Banking', 'BDO Online Banking', 'Other Online Banking', 'Credit/Debit Card (Demo)'];
 const OWNER_EMAIL = 'matchalavur@gmail.com';
+const DEFAULT_STORE_SETTINGS = {
+  brandTitle: 'MATCHA LAVUR',
+  logoUrl: 'logo.jpg',
+  vouchers: VOUCHERS,
+  discounts: DISCOUNTS,
+  ownerPhoto: 'owner1.jfif',
+  sellerPhoto: 'owner2.jfif',
+  openDays: [1, 2, 3, 4, 5, 6],
+  openTime: '09:00',
+  closeTime: '18:00',
+  location: 'Purok 2, Rosal St., Mintal, Davao City',
+  phone: '0995 863 2194',
+  email: 'matchalavur@gmail.com',
+  facebookUrl: '',
+  instagramUrl: '',
+  commercialVideo: 'commercial.mp4',
+  commercialPoster: 'poster.jpg',
+  gallery: [
+    {image: 'photo1.jpg', caption: 'Welcome to MATCHA LAVUR, your home for delicious matcha drinks and sweet treats.'},
+    {image: 'photo2.jpg', caption: 'Discover our selection of quality matcha powders, ingredients, and handcrafted sweets.'},
+    {image: 'ube.jfif', caption: 'Enjoy our refreshing signature drinks, carefully prepared with delicious flavors in every cup.'},
+    {image: 'team.jfif', caption: 'Our dedicated team prepares and packs every order with care to ensure freshness and quality.'}
+  ]
+};
+let storefrontSettings = JSON.parse(JSON.stringify(DEFAULT_STORE_SETTINGS));
 const FAQ = [
   ['How do I place an order?', 'Add items to your cart, open Purchase, fill in your details, choose delivery or pickup, and press Place Order.'],
   ['What payment methods are accepted?', 'Cash on delivery, cash on pickup, or demo e-wallet, online banking, and card options. Online payment details are test-only and no real payment is processed.'],
@@ -74,10 +99,116 @@ const P = id => PRODUCTS.find(p => p.id === id);
 const phImg = (src, label) => `<div class="ph"><img src="${escapeHtml(src)}" alt=""><span>${escapeHtml(label)}<br>${escapeHtml(src)}</span></div>`;
 const ICON_BAG = '<div class="empty-ic"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8a3 3 0 016 0"/></svg></div>';
 
+function normalizeStorefrontSettings(settings) {
+  const merged = {...DEFAULT_STORE_SETTINGS, ...(settings || {})};
+  for (const key of ['brandTitle', 'logoUrl', 'ownerPhoto', 'sellerPhoto', 'openTime', 'closeTime', 'location', 'phone', 'email', 'facebookUrl', 'instagramUrl', 'commercialVideo', 'commercialPoster']) {
+    if (typeof merged[key] !== 'string') merged[key] = DEFAULT_STORE_SETTINGS[key];
+  }
+  merged.vouchers = Array.isArray(merged.vouchers) ? merged.vouchers : DEFAULT_STORE_SETTINGS.vouchers;
+  merged.discounts = Array.isArray(merged.discounts) ? merged.discounts : DEFAULT_STORE_SETTINGS.discounts;
+  merged.openDays = Array.isArray(merged.openDays) ? merged.openDays.map(Number).filter(day => Number.isInteger(day) && day >= 0 && day <= 6) : DEFAULT_STORE_SETTINGS.openDays;
+  merged.gallery = Array.isArray(merged.gallery) ? merged.gallery.filter(item => item && typeof item.image === 'string').map(item => ({
+    image: item.image,
+    caption: String(item.caption || '')
+  })) : DEFAULT_STORE_SETTINGS.gallery;
+  return merged;
+}
+function formatStoreTime(time) {
+  const [hours, minutes] = String(time || '').split(':').map(Number);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return '';
+  return new Date(2000, 0, 1, hours, minutes).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
+}
+function formatOpenDays(days) {
+  const sorted = [...new Set(days)].sort((a, b) => a - b);
+  if (!sorted.length) return 'Closed';
+  if (sorted.length === 7) return 'Every day';
+  if (sorted.join(',') === '1,2,3,4,5,6') return 'Mon to Sat';
+  if (sorted.join(',') === '1,2,3,4,5') return 'Mon to Fri';
+  return sorted.map(day => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day]).join(', ');
+}
+function isStoreOpenNow() {
+  const now = new Date();
+  if (!storefrontSettings.openDays.includes(now.getDay())) return false;
+  const [openHour, openMinute] = storefrontSettings.openTime.split(':').map(Number);
+  const [closeHour, closeMinute] = storefrontSettings.closeTime.split(':').map(Number);
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  return currentMinutes >= openHour * 60 + openMinute && currentMinutes < closeHour * 60 + closeMinute;
+}
+function renderPromoCards() {
+  $('#voucherCards').innerHTML = [...VOUCHERS, ...DISCOUNTS].map(offer =>
+    `<div class="vcard"><b>${escapeHtml(offer.label)}</b><small>${offer.min ? 'Min. spend ' + peso(offer.min) : 'No minimum spend'}</small><br>Code: <code>${escapeHtml(offer.code)}</code></div>`
+  ).join('') || '<p class="muted">No current vouchers or discounts.</p>';
+}
+function applyStorefrontSettings() {
+  storefrontSettings = normalizeStorefrontSettings(storefrontSettings);
+  VOUCHERS = storefrontSettings.vouchers;
+  DISCOUNTS = storefrontSettings.discounts;
+  const brandTitle = storefrontSettings.brandTitle.trim() || DEFAULT_STORE_SETTINGS.brandTitle;
+  document.title = `${brandTitle} | Matcha Drinks & Sweets`;
+  $('#authBrand').textContent = brandTitle;
+  $('#siteBrand').textContent = brandTitle;
+  $('#footerBrand').textContent = brandTitle;
+  $('#homeHeroTitle').textContent = `Welcome to ${brandTitle}`;
+  $('#siteLogo').src = storefrontSettings.logoUrl;
+  $('#siteLogo').hidden = false;
+  $('#siteLogo').alt = `${brandTitle} logo`;
+  $('#authLogo').src = storefrontSettings.logoUrl;
+  $('#authLogo').hidden = false;
+  $('#authLogo').alt = `${brandTitle} logo`;
+  $('#ownerPhoto').src = storefrontSettings.ownerPhoto;
+  $('#ownerPhoto').hidden = false;
+  $('#sellerPhoto').src = storefrontSettings.sellerPhoto;
+  $('#sellerPhoto').hidden = false;
+  const phone = storefrontSettings.phone.trim();
+  $('#contactPhone').href = `tel:${phone.replace(/[^\d+]/g, '')}`;
+  $('#contactPhone b').textContent = phone;
+  $('#contactEmail').href = `mailto:${storefrontSettings.email}`;
+  $('#contactEmail b').textContent = storefrontSettings.email;
+  for (const [id, key] of [['facebookLink', 'facebookUrl'], ['instagramLink', 'instagramUrl']]) {
+    const link = $('#' + id), url = storefrontSettings[key].trim();
+    let safeUrl = '';
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === 'https:') safeUrl = parsed.href;
+    } catch {}
+    if (safeUrl) link.href = safeUrl;
+    else link.removeAttribute('href');
+  }
+  $('#scheduleDays').textContent = formatOpenDays(storefrontSettings.openDays);
+  const hours = `${formatStoreTime(storefrontSettings.openTime)} to ${formatStoreTime(storefrontSettings.closeTime)}`;
+  $('#scheduleHours').textContent = hours;
+  $('#storeLocationText').textContent = storefrontSettings.location;
+  $('#storeLocation').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(storefrontSettings.location)}`;
+  $('#chatStoreHours').textContent = `Store hours: ${formatOpenDays(storefrontSettings.openDays)}, ${hours} | Usually replies when the store is open`;
+  $('#supportStoreHours').textContent = `${formatOpenDays(storefrontSettings.openDays)}, ${hours}`;
+  const video = $('#commercialVideo'), videoSource = $('#commercialVideoSource');
+  if (videoSource.getAttribute('src') !== storefrontSettings.commercialVideo) {
+    videoSource.src = storefrontSettings.commercialVideo;
+    videoSource.type = /\.webm(?:$|\?)/i.test(storefrontSettings.commercialVideo) ? 'video/webm' : 'video/mp4';
+    video.poster = storefrontSettings.commercialPoster;
+    video.load();
+  } else {
+    video.poster = storefrontSettings.commercialPoster;
+  }
+  $('#homeGallery').innerHTML = storefrontSettings.gallery.map(item =>
+    `<figure><div class="ph"><img data-storefront-image src="${escapeHtml(item.image)}" alt="${escapeHtml(item.caption)}"><span>PHOTO</span></div><figcaption>${escapeHtml(item.caption)}</figcaption></figure>`
+  ).join('');
+  renderPromoCards();
+}
+async function loadStorefrontSettings() {
+  const {data, error} = await supabaseClient.from('storefront_settings').select('settings').eq('id', 1).maybeSingle();
+  if (error) {
+    showDatabaseError(error);
+    return;
+  }
+  if (data?.settings) storefrontSettings = normalizeStorefrontSettings(data.settings);
+  applyStorefrontSettings();
+}
+
 /* ---------- STATE ---------- */
 const supabaseClient = window.supabase.createClient(window.MATCHA_SUPABASE_URL, window.MATCHA_SUPABASE_ANON_KEY);
 let session = null, authUser = null, me = null, isAdmin = false;
-let stock = Object.fromEntries(PRODUCTS.map(p => [p.id, 20]));
+let stock = Object.fromEntries(PRODUCTS.map(p => [p.id, 20])), storefrontEditorLoaded = false;
 let userReviews = [], reviewVoteCounts = {}, ownerCustomers = [];
 let cat = 'all', rating = 0, orderTab = 'To Ship', rateOrder = null, rf = 'all', pfPhoto = null, adminCustomer = '', pendingPage = 'home', cancelPage = 'home', realtimeChannel = null;
 let saveQueue = Promise.resolve();
@@ -202,6 +333,13 @@ async function subscribeToStoreChanges(user) {
     })
     .on('postgres_changes', {event: '*', schema: 'public', table: 'reviews'}, () => {
       if (visiblePage() === 'reviews') renderReviews();
+    })
+    .on('postgres_changes', {event: '*', schema: 'public', table: 'storefront_settings'}, async () => {
+      try {
+        await loadStorefrontSettings();
+        if (visiblePage() === 'checkout' && me) renderCheckout();
+        if (visiblePage() === 'cart' && me) renderCart();
+      } catch (error) { showDatabaseError(error); }
     });
   if (user) {
     channel
@@ -286,7 +424,11 @@ async function subscribeToStoreChanges(user) {
 }
 let toastT;
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 3000); }
-document.addEventListener('error', e => { if (e.target.tagName === 'IMG') e.target.remove(); }, true);
+document.addEventListener('error', e => {
+  if (e.target.tagName !== 'IMG') return;
+  if (e.target.hasAttribute('data-storefront-image')) e.target.hidden = true;
+  else e.target.remove();
+}, true);
 const openModal = id => $('#' + id).hidden = false, closeModal = id => $('#' + id).hidden = true;
 document.addEventListener('click', e => { const c = e.target.closest('[data-close]'); if (c) closeModal(c.dataset.close); });
 const initial = n => (n || '?').trim()[0].toUpperCase();
@@ -579,8 +721,7 @@ function go(page) {
 document.addEventListener('click', e => { const t = e.target.closest('[data-go]'); if (t) go(t.dataset.go); });
 
 /* ---------- HOME ---------- */
-$('#voucherCards').innerHTML = [...VOUCHERS, ...DISCOUNTS].map(v =>
-  `<div class="vcard"><b>${v.label}</b><small>${v.min ? 'Min. spend ' + peso(v.min) : 'No minimum spend'}</small><br>Code: <code>${v.code}</code></div>`).join('');
+renderPromoCards();
 $$('.flip').forEach(f => f.onclick = () => f.classList.toggle('on'));
 $('#deliveryOptionsToggle').onclick = () => {
   const options = $('#deliveryOptions');
@@ -649,7 +790,7 @@ const subtotal = () => me.cart.reduce((n, i) => n + P(i.id).price * i.qty, 0);
 function renderCart() {
   if (!me.cart.length) return $('#cartBox').innerHTML = `<div class="card empty">${ICON_BAG}<b>Your cart is empty</b><p>Add some matcha to get started.</p><button class="btn" data-go="products">Start Shopping</button></div>`;
   const sub = subtotal(), offers = [...VOUCHERS, ...DISCOUNTS].filter(v => v.min > sub).sort((a, b) => a.min - b.min), nx = offers[0];
-  const prog = nx ? `Add <b>${peso(nx.min - sub)}</b> more to unlock <b>${nx.code}</b> (${nx.label}).<i style="--w:${Math.min(100, sub / nx.min * 100)}%"></i>` : `You qualify for every voucher and discount. Choose one at checkout!<i style="--w:100%"></i>`;
+  const prog = nx ? `Add <b>${peso(nx.min - sub)}</b> more to unlock <b>${escapeHtml(nx.code)}</b> (${escapeHtml(nx.label)}).<i style="--w:${Math.min(100, sub / nx.min * 100)}%"></i>` : [...VOUCHERS, ...DISCOUNTS].length ? `You qualify for every voucher and discount. Choose one at checkout!<i style="--w:100%"></i>` : 'No vouchers or discounts are available right now.';
   const sugg = PRODUCTS.filter(p => !me.cart.some(i => i.id === p.id) && Number(stock[p.id]) > 0).sort((a, b) => b.rate - a.rate).slice(0, 4);
   $('#cartBox').innerHTML = `<div class="cart-layout"><div>
     <div class="cart-top"><span>${me.cart.reduce((n, i) => n + i.qty, 0)} item(s) in your cart</span><button data-clear>Clear cart</button></div>
@@ -778,10 +919,17 @@ function renderCheckout() {
     ? 'Davao City orders: drinks and sweets arrive in minutes; powder and merchandise deliver in 2–4 days.'
     : 'Outside Davao City, only powder and merchandise can be ordered; delivery takes 2–4 days.';
   $('#deliveryHint').classList.toggle('err', !delivery.isDavao && delivery.hasFreshItems);
+  const voucherMode = $('input[name="promo"][value="voucher"]'), discountMode = $('input[name="promo"][value="discount"]');
+  $('#promoVoucherLabel').hidden = !VOUCHERS.length;
+  $('#promoDiscountLabel').hidden = !DISCOUNTS.length;
+  if ((!VOUCHERS.length && voucherMode.checked) || (!DISCOUNTS.length && discountMode.checked)) $('input[name="promo"][value="none"]').checked = true;
   const mode = val('promo'), list = mode === 'voucher' ? VOUCHERS : DISCOUNTS;
-  if ($('#promoSel').dataset.mode !== mode) {
-    $('#promoSel').dataset.mode = mode; $('#promoSel').hidden = mode === 'none';
-    $('#promoSel').innerHTML = mode === 'none' ? '' : list.map(v => `<option value="${v.code}">${v.code} - ${v.label}${v.min ? ' (min ' + peso(v.min) + ')' : ''}</option>`).join('');
+  const promoSignature = `${mode}:${list.map(offer => offer.code).join('|')}`;
+  if ($('#promoSel').dataset.mode !== promoSignature) {
+    const previousCode = $('#promoSel').value;
+    $('#promoSel').dataset.mode = promoSignature; $('#promoSel').hidden = mode === 'none';
+    $('#promoSel').innerHTML = mode === 'none' ? '' : list.map(offer => `<option value="${escapeHtml(offer.code)}">${escapeHtml(offer.code)} - ${escapeHtml(offer.label)}${offer.min ? ' (min ' + peso(offer.min) + ')' : ''}</option>`).join('');
+    if (list.some(offer => offer.code === previousCode)) $('#promoSel').value = previousCode;
   }
   const c = calc();
   $('#coItems').innerHTML = me.cart.map(i => `<div class="item"><span>${i.qty} x ${P(i.id).name}</span><span>${peso(P(i.id).price * i.qty)}</span></div>`).join('');
@@ -1017,7 +1165,7 @@ async function renderChat() {
   const {data, error} = await supabaseClient.from('messages').select('*').eq('customer_id', authUser.id).order('created_at');
   if (error) return showDatabaseError(error);
   me.msgs = data.map(message => ({id: message.id, from: message.sender_role === 'customer' ? 'me' : 'them', t: message.message, time: new Date(message.created_at).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'})}));
-  const d = new Date(), open = d.getDay() !== 0 && d.getHours() >= 9 && d.getHours() < 18;
+  const open = isStoreOpenNow();
   $('#sellerStatus').textContent = open ? 'Online now' : 'Away. Replies when the store opens';
   $('#chatBody').innerHTML = (me.msgs.length ? '<span class="dsep">Today</span>' : '<p class="muted center">Send a message to the owner.</p>') + me.msgs.map(m => `<div class="msg ${m.from === 'me' ? 'me' : 'them'}">${escapeHtml(m.t)}<small>${escapeHtml(m.time || '')}</small></div>`).join('');
   $('#chatBody').scrollTop = 1e6;
@@ -1039,8 +1187,163 @@ $('#clearChat').onclick = async () => {
 $('#shareOrder').onclick = () => { if (!me.orders.length) return toast('You have no orders to share yet'); $('#chatInput').value = 'Hi! I have a question about order #' + me.orders[0].id + '.'; $('#chatInput').focus(); };
 
 /* ---------- OWNER ADMIN ---------- */
+function renderPromoEditorRow(group, offer = {}) {
+  const isDiscount = group === 'discount';
+  const types = isDiscount
+    ? [['pct', 'Percent off'], ['amt', 'Amount off']]
+    : [['amt', 'Amount off'], ['ship', 'Free shipping']];
+  return `<div class="promo-editor-row" data-promo-row="${group}">
+    <label>Code<input data-promo-field="code" maxlength="40" value="${escapeHtml(offer.code || '')}" required></label>
+    <label>Display name<input data-promo-field="label" maxlength="80" value="${escapeHtml(offer.label || '')}" required></label>
+    <label>Offer type<select data-promo-field="type">${types.map(([value, name]) => `<option value="${value}" ${offer.type === value ? 'selected' : ''}>${name}</option>`).join('')}</select></label>
+    <label>Value<input data-promo-field="val" type="number" min="0" ${isDiscount ? 'max="100"' : ''} step="any" value="${Number(offer.val) || 0}" required></label>
+    <label>Minimum spend<input data-promo-field="min" type="number" min="0" step="any" value="${Number(offer.min) || 0}" required></label>
+    <button class="btn small danger" type="button" data-remove-promo aria-label="Remove ${isDiscount ? 'discount' : 'voucher'}">Remove</button>
+  </div>`;
+}
+function renderGalleryEditorRow(item = {}) {
+  return `<div class="gallery-editor-row" data-current-image="${escapeHtml(item.image || '')}">
+    <img class="content-preview" src="${escapeHtml(item.image || '')}" alt="Gallery image preview" ${item.image ? '' : 'hidden'}>
+    <label>Replace image<input type="file" data-gallery-file accept="image/jpeg,image/png,image/webp,image/gif"></label>
+    <label>Caption<input data-gallery-caption maxlength="240" value="${escapeHtml(item.caption || '')}"></label>
+    <button class="btn small danger" type="button" data-remove-gallery>Remove photo</button>
+  </div>`;
+}
+function renderStorefrontEditor() {
+  const form = $('#storefrontForm');
+  for (const field of form.querySelectorAll('[data-setting]')) field.value = storefrontSettings[field.dataset.setting] || '';
+  form.querySelectorAll('[name="openDays"]').forEach(day => { day.checked = storefrontSettings.openDays.includes(Number(day.value)); });
+  form.querySelectorAll('[data-asset-preview]').forEach(preview => {
+    const url = storefrontSettings[preview.dataset.assetPreview];
+    preview.src = url || '';
+    preview.hidden = !url;
+  });
+  $('#voucherEditorRows').innerHTML = VOUCHERS.map(offer => renderPromoEditorRow('voucher', offer)).join('');
+  $('#discountEditorRows').innerHTML = DISCOUNTS.map(offer => renderPromoEditorRow('discount', offer)).join('');
+  $('#galleryEditorRows').innerHTML = storefrontSettings.gallery.map(renderGalleryEditorRow).join('');
+  storefrontEditorLoaded = true;
+}
+function collectPromoEditorRows(group) {
+  return [...document.querySelectorAll(`[data-promo-row="${group}"]`)].map(row => {
+    const field = name => row.querySelector(`[data-promo-field="${name}"]`).value.trim();
+    const code = field('code').toUpperCase(), label = field('label'), type = field('type');
+    const val = Number(field('val')), min = Number(field('min'));
+    if (!/^[A-Z0-9_-]+$/.test(code) || !label || !Number.isFinite(val) || val < 0 || !Number.isFinite(min) || min < 0) {
+      throw new Error('Each promotion needs a valid code, name, value, and non-negative minimum spend.');
+    }
+    if (type === 'pct' && val > 100) throw new Error('Percentage discounts cannot be greater than 100%.');
+    return {code, label, type, val: type === 'ship' ? 0 : val, min};
+  });
+}
+async function uploadStorefrontAsset(file, key, uploadedPaths) {
+  const imageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  const isVideo = key === 'commercialVideo';
+  const videoTypes = ['video/mp4', 'video/webm'];
+  if (!(isVideo ? videoTypes : imageTypes).includes(file.type)) {
+    throw new Error(isVideo ? 'Choose an MP4 or WebM video.' : 'Choose a JPG, PNG, GIF or WebP image.');
+  }
+  const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+  if (file.size > maxSize) throw new Error(isVideo ? 'Choose a video no larger than 100 MB.' : 'Choose an image no larger than 10 MB.');
+  const ext = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'video/mp4': 'mp4', 'video/webm': 'webm'}[file.type];
+  const path = `storefront/${crypto.randomUUID()}.${ext}`;
+  const {data, error} = await supabaseClient.storage.from('matcha-storefront-assets').upload(path, file, {upsert: false, contentType: file.type});
+  if (error) throw error;
+  uploadedPaths.push(path);
+  return supabaseClient.storage.from('matcha-storefront-assets').getPublicUrl(data.path).data.publicUrl;
+}
+function storefrontAssetPaths(settings) {
+  const urls = [settings.logoUrl, settings.ownerPhoto, settings.sellerPhoto, settings.commercialVideo, settings.commercialPoster, ...(settings.gallery || []).map(item => item.image)];
+  const marker = '/storage/v1/object/public/matcha-storefront-assets/';
+  return urls.filter(url => typeof url === 'string' && url.includes(marker)).map(url => decodeURIComponent(url.split(marker)[1]));
+}
+$('#storefrontForm').onclick = e => {
+  const removePromo = e.target.closest('[data-remove-promo]');
+  const addPromo = e.target.closest('[data-add-promo]');
+  if (removePromo) removePromo.closest('[data-promo-row]').remove();
+  if (addPromo) {
+    const group = addPromo.dataset.addPromo;
+    const container = group === 'voucher' ? $('#voucherEditorRows') : $('#discountEditorRows');
+    container.insertAdjacentHTML('beforeend', renderPromoEditorRow(group, {type: group === 'voucher' ? 'amt' : 'pct'}));
+  }
+  const removeGallery = e.target.closest('[data-remove-gallery]');
+  if (removeGallery) removeGallery.closest('.gallery-editor-row').remove();
+};
+$('#addGalleryItem').onclick = () => $('#galleryEditorRows').insertAdjacentHTML('beforeend', renderGalleryEditorRow());
+$('#storefrontForm').onchange = e => {
+  const input = e.target.closest('input[type="file"]');
+  if (!input || !input.files[0]) return;
+  const preview = input.matches('[data-asset-key]')
+    ? document.querySelector(`[data-asset-preview="${input.dataset.assetKey}"]`)
+    : input.closest('.gallery-editor-row').querySelector('.content-preview');
+  if (!preview) return;
+  preview.src = URL.createObjectURL(input.files[0]);
+  preview.hidden = false;
+};
+$('#storefrontForm').onsubmit = async e => {
+  e.preventDefault();
+  if (!isAdmin) return toast('Only the store owner can update website content.');
+  const form = e.currentTarget, saveButton = $('#saveStorefront'), uploadedPaths = [];
+  const previousSettings = storefrontSettings;
+  let settingsPersisted = false;
+  const next = {...storefrontSettings};
+  for (const field of form.querySelectorAll('[data-setting]')) next[field.dataset.setting] = field.value.trim();
+  next.openDays = [...form.querySelectorAll('[name="openDays"]:checked')].map(day => Number(day.value));
+  if (next.closeTime <= next.openTime) return toast('Closing time must be later than opening time.');
+  try {
+    saveButton.disabled = true;
+    $('#storefrontSaveMessage').textContent = 'Saving website changes...';
+    next.vouchers = collectPromoEditorRows('voucher');
+    next.discounts = collectPromoEditorRows('discount');
+    for (const key of ['facebookUrl', 'instagramUrl']) {
+      if (next[key] && new URL(next[key]).protocol !== 'https:') throw new Error('Social media links must use a secure https:// address.');
+    }
+    const codes = [...next.vouchers, ...next.discounts].map(offer => offer.code);
+    if (new Set(codes).size !== codes.length) throw new Error('Promotion codes must be unique.');
+    const galleryRows = [...$('#galleryEditorRows').querySelectorAll('.gallery-editor-row')];
+    next.gallery = [];
+    for (const row of galleryRows) {
+      const file = row.querySelector('[data-gallery-file]').files[0];
+      const image = file ? await uploadStorefrontAsset(file, 'gallery', uploadedPaths) : row.dataset.currentImage;
+      if (!image) throw new Error('Choose an image for every gallery item or remove the empty item.');
+      next.gallery.push({image, caption: row.querySelector('[data-gallery-caption]').value.trim()});
+    }
+    for (const input of form.querySelectorAll('[data-asset-key]')) {
+      const file = input.files[0];
+      if (file) next[input.dataset.assetKey] = await uploadStorefrontAsset(file, input.dataset.assetKey, uploadedPaths);
+    }
+    const {data, error} = await supabaseClient.from('storefront_settings')
+      .update({settings: next, updated_at: new Date().toISOString()}).eq('id', 1).select('id').maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error('The storefront settings row is missing. Run the storefront content SQL setup first.');
+    settingsPersisted = true;
+    storefrontSettings = normalizeStorefrontSettings(next);
+    applyStorefrontSettings();
+    renderStorefrontEditor();
+    if (!$('[data-page="checkout"]').hidden && me) renderCheckout();
+    if (!$('[data-page="cart"]').hidden && me) renderCart();
+    const usedPaths = new Set(storefrontAssetPaths(storefrontSettings));
+    const obsoletePaths = storefrontAssetPaths(previousSettings).filter(path => !usedPaths.has(path));
+    let cleanupWarning = '';
+    if (obsoletePaths.length) {
+      const {error: cleanupError} = await supabaseClient.storage.from('matcha-storefront-assets').remove(obsoletePaths);
+      if (cleanupError) cleanupWarning = ` Old media could not be removed: ${cleanupError.message}`;
+    }
+    $('#storefrontSaveMessage').textContent = cleanupWarning ? 'Website saved, but old media cleanup failed.' : 'Website content saved.';
+    toast(cleanupWarning ? `Website saved.${cleanupWarning}` : 'Website content saved.');
+  } catch (error) {
+    if (uploadedPaths.length && !settingsPersisted) {
+      const {error: cleanupError} = await supabaseClient.storage.from('matcha-storefront-assets').remove(uploadedPaths);
+      if (cleanupError) return toast(`${error.message} Temporary upload cleanup failed: ${cleanupError.message}`);
+    }
+    $('#storefrontSaveMessage').textContent = '';
+    toast(error.message);
+  } finally {
+    saveButton.disabled = false;
+  }
+};
 async function renderAdmin() {
   if (!isAdmin) return;
+  if (!storefrontEditorLoaded) renderStorefrontEditor();
   const [ordersResult, stockResult, profilesResult] = await Promise.all([
     supabaseClient.from('orders').select('*,order_items(*)').order('created_at', {ascending: false}),
     supabaseClient.from('products').select('id,stock'),
@@ -1077,13 +1380,13 @@ async function renderAdmin() {
     <div class="stat"><small>Total orders</small><b>${allOrders.length}</b></div>
     <div class="stat"><small>Active orders</small><b>${pending}</b></div>
     <div class="stat"><small>Refunds to review</small><b>${refunds}</b></div>`;
-  $('#ownerSales').innerHTML = bestSellers.length ? bestSellers.map(item => `<div class="sales-row"><span>${escapeHtml(item.name)} <small class="muted">(${item.quantity} sold)</small></span><b>${peso(item.revenue)}</b></div>`).join('') : '<p class="muted">Sales will appear here after customers place orders.</p>';
+  $('#ownerSales').innerHTML = bestSellers.length ? bestSellers.map(item => `<div class="sales-row"><span>${item.name} <small class="muted">(${item.quantity} sold)</small></span><b>${peso(item.revenue)}</b></div>`).join('') : '<p class="muted">Sales will appear here after customers place orders.</p>';
   $('#adminOrders').innerHTML = allOrders.length ? allOrders.map(({email, user, order}) => {
     const demoPayment = DEMO_PAYMENT_METHODS.includes(order.method);
     return `
     <div class="card order">
       <div class="order-h"><b>Order #${escapeHtml(order.id)} · ${escapeHtml(user.full_name)}</b><span>${escapeHtml(email)}</span><span class="status">${escapeHtml(order.status)}</span></div>
-      <p class="muted">${order.items.map(i => `${escapeHtml(P(i.id).name)} × ${i.qty}`).join(', ')} | ${peso(order.total)}</p>
+      <p class="muted">${order.items.map(i => `${P(i.id).name} × ${i.qty}`).join(', ')} | ${peso(order.total)}</p>
       <p class="muted">${escapeHtml(order.delivery || '')} ${escapeHtml(order.fulfillment || '')} | ${escapeHtml(order.addr || '')}</p>
       <p class="muted"><b>Payment:</b> ${escapeHtml(order.method)}${demoPayment ? ' — demo payment simulated; no money transferred' : ''}</p>
       ${order.note ? `<p class="muted">Order note: ${escapeHtml(order.note)}</p>` : ''}
@@ -1095,7 +1398,7 @@ async function renderAdmin() {
       </div>
     </div>`;
   }).join('') : '<div class="card empty">No orders yet.</div>';
-  $('#adminStock').innerHTML = PRODUCTS.map(p => `<div class="stock-row"><b>${escapeHtml(p.name)}</b><input type="number" min="0" step="1" value="${Math.max(0, Number(stock[p.id]) || 0)}" data-stock="${p.id}" aria-label="Available stock for ${escapeHtml(p.name)}"><button class="btn small" data-stock-save="${p.id}">Save</button></div>`).join('');
+  $('#adminStock').innerHTML = PRODUCTS.map(p => `<div class="stock-row"><b>${p.name}</b><input type="number" min="0" step="1" value="${Math.max(0, Number(stock[p.id]) || 0)}" data-stock="${p.id}" aria-label="Available stock for ${p.name}"><button class="btn small" data-stock-save="${p.id}">Save</button></div>`).join('');
   if (!ownerCustomers.some(customer => customer.id === adminCustomer)) adminCustomer = ownerCustomers[0]?.id || '';
   $('#adminCustomer').innerHTML = ownerCustomers.map(customer => `<option value="${customer.id}" ${customer.id === adminCustomer ? 'selected' : ''}>${escapeHtml(customer.full_name)} (${escapeHtml(customer.email)})</option>`).join('');
   $('#adminCustomer').disabled = !ownerCustomers.length;
@@ -1162,10 +1465,11 @@ $('#csForm').onsubmit = async e => {
 };
 
 /* ---------- INIT ---------- */
-$$('img').forEach(i => { if (i.complete && !i.naturalWidth) i.remove(); });
+$$('img').forEach(i => { if (i.complete && !i.naturalWidth && !i.hasAttribute('data-storefront-image')) i.remove(); });
 (async function initialize() {
   try {
     await loadStock();
+    await loadStorefrontSettings();
     const {data, error} = await supabaseClient.auth.getSession();
     if (error) throw error;
     if (data.session?.user) await startSession(data.session.user);

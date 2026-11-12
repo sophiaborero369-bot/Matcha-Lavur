@@ -24,6 +24,12 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.storefront_settings (
+  id integer primary key check (id = 1),
+  settings jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.products (
   id integer primary key,
   name text not null,
@@ -72,6 +78,41 @@ on conflict (id) do update set
   name = excluded.name,
   category = excluded.category,
   price = excluded.price;
+
+insert into public.storefront_settings (id, settings)
+select 1, '{
+  "brandTitle": "MATCHA LAVUR",
+  "logoUrl": "logo.jpg",
+  "vouchers": [
+    {"code": "LAVUR50", "label": "P50 off", "type": "amt", "val": 50, "min": 300},
+    {"code": "WELCOME100", "label": "P100 off", "type": "amt", "val": 100, "min": 500},
+    {"code": "FREESHIP", "label": "Free shipping", "type": "ship", "val": 0, "min": 200}
+  ],
+  "discounts": [
+    {"code": "NEWOPEN10", "label": "10% off (New Opening)", "type": "pct", "val": 10, "min": 0},
+    {"code": "GRANDOPEN15", "label": "15% off", "type": "pct", "val": 15, "min": 600},
+    {"code": "MATCHA20", "label": "20% off", "type": "pct", "val": 20, "min": 1000}
+  ],
+  "ownerPhoto": "owner1.jfif",
+  "sellerPhoto": "owner2.jfif",
+  "openDays": [1, 2, 3, 4, 5, 6],
+  "openTime": "09:00",
+  "closeTime": "18:00",
+  "location": "Purok 2, Rosal St., Mintal, Davao City",
+  "phone": "0995 863 2194",
+  "email": "matchalavur@gmail.com",
+  "facebookUrl": "",
+  "instagramUrl": "",
+  "commercialVideo": "commercial.mp4",
+  "commercialPoster": "poster.jpg",
+  "gallery": [
+    {"image": "photo1.jpg", "caption": "Welcome to MATCHA LAVUR, your home for delicious matcha drinks and sweet treats."},
+    {"image": "photo2.jpg", "caption": "Discover our selection of quality matcha powders, ingredients, and handcrafted sweets."},
+    {"image": "ube.jfif", "caption": "Enjoy our refreshing signature drinks, carefully prepared with delicious flavors in every cup."},
+    {"image": "team.jfif", "caption": "Our dedicated team prepares and packs every order with care to ensure freshness and quality."}
+  ]
+}'::jsonb
+on conflict (id) do nothing;
 
 create table if not exists public.cart_items (
   customer_id uuid not null references auth.users(id) on delete cascade,
@@ -198,6 +239,7 @@ alter table public.order_items enable row level security;
 alter table public.reviews enable row level security;
 alter table public.review_votes enable row level security;
 alter table public.messages enable row level security;
+alter table public.storefront_settings enable row level security;
 
 create policy "Profiles readable by account or owner" on public.profiles
   for select to authenticated using (id = (select auth.uid()) or (select public.is_matcha_owner()));
@@ -230,6 +272,10 @@ create policy "Reviews are public" on public.reviews
 create policy "Customers or owner delete reviews" on public.reviews
   for delete to authenticated using (customer_id = (select auth.uid()) or (select public.is_matcha_owner()));
 create policy "Owner updates review replies" on public.reviews
+  for update to authenticated using ((select public.is_matcha_owner())) with check ((select public.is_matcha_owner()));
+create policy "Storefront content is public" on public.storefront_settings
+  for select to anon, authenticated using (true);
+create policy "Owner updates storefront content" on public.storefront_settings
   for update to authenticated using ((select public.is_matcha_owner())) with check ((select public.is_matcha_owner()));
 create policy "Customers manage own review votes" on public.review_votes
   for all to authenticated using (customer_id = (select auth.uid())) with check (customer_id = (select auth.uid()));
@@ -537,6 +583,16 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values ('matcha-profile-photos', 'matcha-profile-photos', true, 2097152, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
 
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('matcha-storefront-assets', 'matcha-storefront-assets', true, 104857600, array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm'])
+on conflict (id) do nothing;
+
+create policy "Storefront assets are public" on storage.objects
+  for select to anon, authenticated using (bucket_id = 'matcha-storefront-assets');
+create policy "Owner manages storefront assets" on storage.objects
+  for all to authenticated using (bucket_id = 'matcha-storefront-assets' and (select public.is_matcha_owner()))
+  with check (bucket_id = 'matcha-storefront-assets' and (select public.is_matcha_owner()));
+
 create policy "Review photos are public" on storage.objects
   for select to anon, authenticated using (bucket_id = 'matcha-review-photos');
 create policy "Customers upload their own review photos" on storage.objects
@@ -573,6 +629,8 @@ grant select on public.order_items to authenticated;
 grant select, delete on public.reviews to anon, authenticated;
 revoke update on public.reviews from public, anon, authenticated;
 grant update (owner_reply) on public.reviews to authenticated;
+grant select on public.storefront_settings to anon, authenticated;
+grant update on public.storefront_settings to authenticated;
 grant select, insert, delete on public.review_votes to authenticated;
 grant select, insert, delete on public.messages to authenticated;
 grant usage, select on sequence public.order_items_id_seq to authenticated;
@@ -596,7 +654,7 @@ do $$
 declare
   table_name text;
 begin
-  foreach table_name in array array['orders', 'order_items', 'products', 'profiles', 'reviews', 'messages'] loop
+  foreach table_name in array array['orders', 'order_items', 'products', 'profiles', 'reviews', 'messages', 'storefront_settings'] loop
     if not exists (
       select 1
       from pg_publication_tables

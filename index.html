@@ -11,8 +11,8 @@
 <!-- ========== LOG IN / SIGN UP ========== -->
 <div id="auth" hidden>
   <div class="auth-card">
-    <div class="ph logo-ph"><img src="logo.jpg" alt=""><span>LOGO<br>images/logo.png</span></div>
-    <h1>MATCHA LAVUR</h1>
+    <div class="ph logo-ph"><img id="authLogo" data-storefront-image src="logo.jpg" alt="Matcha Lavur logo"><span>LOGO<br>images/logo.png</span></div>
+    <h1 id="authBrand">MATCHA LAVUR</h1>
     <p class="auth-sub">Sign in or create an account to start shopping.</p>
     <div class="tabs"><button class="tab active" data-auth="login">Log In</button><button class="tab" data-auth="signup">Sign Up</button></div>
 
@@ -93,8 +93,8 @@
 <header>
   <div class="bar">
     <a class="brand" data-go="home">
-      <span class="ph logo-sm"><img src="logo.jpg" alt=""><span>LOGO</span></span>
-      <b>MATCHA LAVUR</b>
+      <span class="ph logo-sm"><img id="siteLogo" data-storefront-image src="logo.jpg" alt="Matcha Lavur logo"><span>LOGO</span></span>
+      <b id="siteBrand">MATCHA LAVUR</b>
     </a>
     <nav id="nav">
       <button data-go="home">Home</button>
@@ -127,7 +127,7 @@
   <div class="hero">
     <div class="hero-text">
       <span class="pill">NEW OPENING SALE</span>
-      <h2>Welcome to MATCHA LAVUR</h2>
+      <h2 id="homeHeroTitle">Welcome to MATCHA LAVUR</h2>
       <p>Your online matcha shop for freshly crafted matcha drinks and sweets. Shop from home, pay your way, and track every order, all in one place.</p>
       <button class="btn big" data-go="products">Shop the Collection</button>
     </div>
@@ -148,33 +148,33 @@
   <div class="about">
     <div class="about-people">
       <figure class="owner-card">
-        <div class="ph owner"><img src="owner1.jfif" alt=""><span>OWNER PHOTO 1<br>images/owner1.jpg</span></div>
+        <div class="ph owner"><img id="ownerPhoto" data-storefront-image src="owner1.jfif" alt="Store owner"><span>OWNER PHOTO 1<br>images/owner1.jpg</span></div>
         <figcaption><em>Owner</em><b>(SOPHIA BORERO)</b></figcaption>
       </figure>
       <figure class="owner-card">
-        <div class="ph owner"><img src="owner2.jfif" alt=""><span>SELLER PHOTO 2<br>images/owner2.jpg</span></div>
+        <div class="ph owner"><img id="sellerPhoto" data-storefront-image src="owner2.jfif" alt="Store seller"><span>SELLER PHOTO 2<br>images/owner2.jpg</span></div>
         <figcaption><em>Seller</em><b>(FATE MALANAS)</b></figcaption>
       </figure>
       <aside class="contact-card" aria-labelledby="contactTitle">
         <span class="pill sm">Get in touch</span>
         <h4 id="contactTitle">We'd love to hear from you</h4>
         <div class="contact-list">
-          <a class="contact-item" href="tel:+639958632194">
+          <a class="contact-item" id="contactPhone" href="tel:+639958632194">
             <span class="contact-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.8 2.1Z"/></svg></span>
             <span><small>Call or text</small><b>0995 863 2194</b></span>
           </a>
-          <a class="contact-item" href="mailto:matchalavur@gmail.com">
+          <a class="contact-item" id="contactEmail" href="mailto:matchalavur@gmail.com">
             <span class="contact-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
             <span><small>Email us</small><b>matchalavur@gmail.com</b></span>
           </a>
-          <div class="contact-item">
+          <a class="contact-item" id="facebookLink" target="_blank" rel="noopener noreferrer">
             <span class="contact-icon facebook-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.02 4.39 11.02 10.13 11.93v-8.43H7.08v-3.5h3.05V9.4c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.52c-1.49 0-1.96.93-1.96 1.88v2.27h3.33l-.53 3.5h-2.8V24C19.61 23.09 24 18.09 24 12.07Z"/></svg></span>
             <span><small>Facebook</small><b>Matcha Lavur</b></span>
-          </div>
-          <div class="contact-item">
+          </a>
+          <a class="contact-item" id="instagramLink" target="_blank" rel="noopener noreferrer">
             <span class="contact-icon instagram-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle class="instagram-dot" cx="18" cy="6" r="1"/></svg></span>
             <span><small>Instagram</small><b>Matcha Lavur</b></span>
-          </div>
+          </a>
         </div>
       </aside>
     </div>
@@ -184,10 +184,10 @@
       <p>Matcha Lavur brings together freshly prepared matcha drinks and sweets, quality matcha powders, and matcha-inspired finds. Drinks and sweets are available in Davao City, while matcha powders and merchandise can be delivered outside Davao City.</p>
       <div class="vals"><span>Freshly made</span><span>Direct to you</span><span>Quality matcha</span></div>
       <div class="hours">
-        <div><small>Open</small><b>Mon to Sat</b></div>
-        <div><small>Hours</small><b>9AM to 6PM</b></div>
-        <a class="about-location" href="https://www.google.com/maps/search/?api=1&query=Purok+2%2C+Rosal+St.%2C+Mintal%2C+Davao+City" target="_blank" rel="noopener noreferrer">
-          <small>Our location</small><b>Purok 2, Rosal St., Mintal, Davao City</b><span>Open map ↗</span>
+        <div><small>Open</small><b id="scheduleDays">Mon to Sat</b></div>
+        <div><small>Hours</small><b id="scheduleHours">9AM to 6PM</b></div>
+        <a class="about-location" id="storeLocation" href="https://www.google.com/maps/search/?api=1&amp;query=Purok+2%2C+Rosal+St.%2C+Mintal%2C+Davao+City" target="_blank" rel="noopener noreferrer">
+          <small>Our location</small><b id="storeLocationText">Purok 2, Rosal St., Mintal, Davao City</b><span>Open map ↗</span>
         </a>
         <button class="about-delivery" id="deliveryOptionsToggle" type="button" aria-expanded="false" aria-controls="deliveryOptions">
           <small>Delivery options</small><b>Check what we deliver</b><span>Choose your area ↓</span>
@@ -209,7 +209,7 @@
 
   <h3 class="title">Commercial Video</h3>
   <div class="video-wrap">
-    <video controls autoplay muted loop playsinline poster="poster.jpg"><source src="commercial.mp4" type="video/mp4">Your browser does not support video.</video>
+    <video id="commercialVideo" controls autoplay muted loop playsinline poster="poster.jpg"><source id="commercialVideoSource" src="commercial.mp4" type="video/mp4">Your browser does not support video.</video>
     <div class="video-desc">
       <b>The Matcha Lavur Story</b>
       <p>Discover the world of MATCHA LAVUR, where premium matcha meets creativity and passion. Watch how we prepare our signature matcha drinks, blend refreshing flavors, and create delicious matcha sweets with care. From carefully selected matcha powder to every freshly prepared cup, we bring you a delightful matcha experience in every sip.</code>.</p>
@@ -217,7 +217,7 @@
   </div>
 
   <h3 class="title">Photo Gallery</h3>
-  <div class="gallery">
+  <div class="gallery" id="homeGallery">
     <figure><div class="ph"><img src="photo1.jpg" alt=""><span>PHOTO<br>images/gallery1.jpg</span></div><figcaption>Welcome to MATCHA LAVUR, your home for delicious matcha drinks and sweet treats.</figcaption></figure>
     <figure><div class="ph"><img src="photo2.jpg" alt=""><span>PHOTO<br>images/gallery2.jpg</span></div><figcaption>Discover our selection of quality matcha powders, ingredients, and handcrafted sweets.</figcaption></figure>
     <figure><div class="ph"><img src="ube.jfif" alt=""><span>PHOTO<br>images/gallery3.jpg</span></div><figcaption>Enjoy our refreshing signature drinks, carefully prepared with delicious flavors in every cup.</figcaption></figure>
@@ -345,7 +345,7 @@
         </div>
 
         <h4>Voucher or Discount</h4>
-        <div class="seg"><label><input type="radio" name="promo" value="none" checked> None</label><label><input type="radio" name="promo" value="voucher"> Voucher</label><label><input type="radio" name="promo" value="discount"> Discount</label></div>
+        <div class="seg"><label><input type="radio" name="promo" value="none" checked> None</label><label id="promoVoucherLabel"><input type="radio" name="promo" value="voucher"> Voucher</label><label id="promoDiscountLabel"><input type="radio" name="promo" value="discount"> Discount</label></div>
         <select id="promoSel" hidden></select>
         <p id="promoMsg" class="muted"></p>
       </div>
@@ -381,6 +381,59 @@
     <div><small class="muted">Store owner</small><b id="ownerName"></b><span id="ownerEmail" class="muted"></span></div>
     <button class="btn small ghost" id="ownerEditProfile" type="button">Edit Profile</button>
   </div>
+  <h4 class="sec-h">Storefront Content</h4>
+  <details class="card content-editor" id="storefrontEditor">
+    <summary>Edit website content</summary>
+    <p class="muted">Changes are saved for all visitors. Images must be JPG, PNG, GIF or WebP; videos must be MP4 or WebM, up to 100 MB.</p>
+    <form id="storefrontForm">
+      <div class="content-editor-grid">
+        <section class="content-editor-section">
+          <h5>Website name and logo</h5>
+          <label>Store title<input data-setting="brandTitle" maxlength="80" required></label>
+          <label>Logo image<input type="file" data-asset-key="logoUrl" accept="image/jpeg,image/png,image/webp,image/gif"><img class="content-preview logo-preview" data-storefront-image data-asset-preview="logoUrl" alt="Current store logo"></label>
+        </section>
+        <section class="content-editor-section">
+          <h5>Owner and seller photos</h5>
+          <label>Owner photo<input type="file" data-asset-key="ownerPhoto" accept="image/jpeg,image/png,image/webp,image/gif"><img class="content-preview" data-storefront-image data-asset-preview="ownerPhoto" alt="Current owner photo"></label>
+          <label>Seller photo<input type="file" data-asset-key="sellerPhoto" accept="image/jpeg,image/png,image/webp,image/gif"><img class="content-preview" data-storefront-image data-asset-preview="sellerPhoto" alt="Current seller photo"></label>
+        </section>
+        <section class="content-editor-section">
+          <h5>Store schedule and contact</h5>
+          <fieldset class="schedule-days"><legend>Open days</legend>
+            <label><input type="checkbox" name="openDays" value="0"> Sun</label><label><input type="checkbox" name="openDays" value="1"> Mon</label>
+            <label><input type="checkbox" name="openDays" value="2"> Tue</label><label><input type="checkbox" name="openDays" value="3"> Wed</label>
+            <label><input type="checkbox" name="openDays" value="4"> Thu</label><label><input type="checkbox" name="openDays" value="5"> Fri</label>
+            <label><input type="checkbox" name="openDays" value="6"> Sat</label>
+          </fieldset>
+          <div class="content-inline"><label>Opens<input type="time" data-setting="openTime" required></label><label>Closes<input type="time" data-setting="closeTime" required></label></div>
+          <label>Location<input data-setting="location" maxlength="240" required></label>
+          <label>Phone<input type="tel" data-setting="phone" maxlength="40" required></label>
+          <label>Email<input type="email" data-setting="email" maxlength="120" required></label>
+          <label>Facebook URL<input type="url" data-setting="facebookUrl" maxlength="300" placeholder="https://facebook.com/your-page"></label>
+          <label>Instagram URL<input type="url" data-setting="instagramUrl" maxlength="300" placeholder="https://instagram.com/your-account"></label>
+        </section>
+        <section class="content-editor-section">
+          <h5>Commercial video</h5>
+          <label>Video file<input type="file" data-asset-key="commercialVideo" accept="video/mp4,video/webm"></label>
+          <label>Video poster image<input type="file" data-asset-key="commercialPoster" accept="image/jpeg,image/png,image/webp,image/gif"><img class="content-preview" data-storefront-image data-asset-preview="commercialPoster" alt="Current video poster"></label>
+        </section>
+      </div>
+      <section class="content-editor-section">
+        <div class="content-editor-heading"><h5>Vouchers</h5><button class="btn small ghost" type="button" data-add-promo="voucher">Add Voucher</button></div>
+        <div id="voucherEditorRows" class="promo-editor-rows"></div>
+      </section>
+      <section class="content-editor-section">
+        <div class="content-editor-heading"><h5>Discounts</h5><button class="btn small ghost" type="button" data-add-promo="discount">Add Discount</button></div>
+        <div id="discountEditorRows" class="promo-editor-rows"></div>
+      </section>
+      <section class="content-editor-section">
+        <div class="content-editor-heading"><div><h5>Photo gallery</h5><p class="muted">Add, remove or update gallery photos and captions.</p></div><button class="btn small ghost" type="button" id="addGalleryItem">Add Photo</button></div>
+        <div id="galleryEditorRows" class="gallery-editor-rows"></div>
+      </section>
+      <button class="btn" type="submit" id="saveStorefront">Save Website Changes</button>
+      <p class="ok" id="storefrontSaveMessage" role="status"></p>
+    </form>
+  </details>
   <h4 class="sec-h">Sales Overview</h4>
   <div class="stats" id="ownerStats"></div>
   <h4 class="sec-h">Sales by Product</h4>
@@ -416,7 +469,7 @@
       <div class="chat-who"><b>Matcha Lavur Seller</b><small id="sellerStatus"></small></div>
       <button class="btn small ghost" id="clearChat" type="button">Clear chat</button>
     </div>
-    <div class="chat-info">Store hours: Mon to Sat, 9AM to 6PM | Usually replies within minutes</div>
+    <div class="chat-info" id="chatStoreHours">Store hours: Mon to Sat, 9AM to 6PM | Usually replies within minutes</div>
     <div id="chatBody"></div>
     <div class="quick" id="quick"><button>Is my order shipped?</button><button>Do you accept bulk orders?</button><button>Any available vouchers?</button></div>
     <form id="chatForm"><button class="btn small ghost" id="shareOrder" type="button">Share order</button><input id="chatInput" placeholder="Type a message..." autocomplete="off"><button class="btn">Send</button></form>
@@ -433,7 +486,7 @@
     </div>
     <form class="card" id="csForm">
       <h4>Customer Service</h4>
-      <p class="muted">Send your concern to the owner. Sign in to submit a support message.<br>Mon to Sat, 9AM to 6PM</p>
+      <p class="muted">Send your concern to the owner. Sign in to submit a support message.<br><span id="supportStoreHours">Mon to Sat, 9AM to 6PM</span></p>
       <select id="csTopic"><option>Order issue</option><option>Payment problem</option><option>Return / Refund</option><option>Account help</option><option>Other</option></select>
       <textarea id="csMsg" rows="4" maxlength="3900" placeholder="Describe your concern..." required></textarea>
       <button class="btn">Send to Owner</button>
@@ -443,7 +496,7 @@
 </section>
 </main>
 
-<footer><b>MATCHA LAVUR</b> | B2C Online Matcha Shop | CP 308 Web System and Technologies</footer>
+<footer><b id="footerBrand">MATCHA LAVUR</b> | B2C Online Matcha Shop | CP 308 Web System and Technologies</footer>
 </div>
 
 <!-- ========== MODALS ========== -->
