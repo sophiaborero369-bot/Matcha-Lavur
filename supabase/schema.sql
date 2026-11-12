@@ -133,6 +133,7 @@ create table if not exists public.reviews (
   stars integer not null check (stars between 1 and 5),
   review_text text not null,
   photo_url text not null default '',
+  owner_reply text not null default '' check (length(owner_reply) <= 1000),
   created_at timestamptz not null default now()
 );
 
@@ -228,6 +229,8 @@ create policy "Reviews are public" on public.reviews
   for select to anon, authenticated using (true);
 create policy "Customers or owner delete reviews" on public.reviews
   for delete to authenticated using (customer_id = (select auth.uid()) or (select public.is_matcha_owner()));
+create policy "Owner updates review replies" on public.reviews
+  for update to authenticated using ((select public.is_matcha_owner())) with check ((select public.is_matcha_owner()));
 create policy "Customers manage own review votes" on public.review_votes
   for all to authenticated using (customer_id = (select auth.uid())) with check (customer_id = (select auth.uid()));
 create policy "Customers read own review votes" on public.review_votes
@@ -568,6 +571,8 @@ grant select, insert, update, delete on public.cart_items, public.wishlist_items
 grant select, update on public.orders to authenticated;
 grant select on public.order_items to authenticated;
 grant select, delete on public.reviews to anon, authenticated;
+revoke update on public.reviews from public, anon, authenticated;
+grant update (owner_reply) on public.reviews to authenticated;
 grant select, insert, delete on public.review_votes to authenticated;
 grant select, insert, delete on public.messages to authenticated;
 grant usage, select on sequence public.order_items_id_seq to authenticated;

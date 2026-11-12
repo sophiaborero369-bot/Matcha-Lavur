@@ -935,12 +935,14 @@ async function renderReviews() {
   if (countsResult.error) return showDatabaseError(countsResult.error);
   userReviews = reviewsResult.data.map(review => ({
     id: review.id, name: review.customer_name || 'Customer', pid: review.product_id,
-    stars: review.stars, text: review.review_text, img: review.photo_url,
+    stars: review.stars, text: review.review_text, img: review.photo_url, reply: review.owner_reply || '',
     date: new Date(review.created_at).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}),
     help: Number((countsResult.data || []).find(vote => vote.review_id === review.id)?.vote_count || 0)
   }));
   reviewVoteCounts = Object.fromEntries(userReviews.map(review => [review.id, review.help]));
   const opts = rateOrder ? rateOrder.items.map(i => P(i.id)).filter(Boolean) : PRODUCTS, all = allReviews();
+  $('#reviewForm').hidden = isAdmin;
+  $('#reviewLayout').classList.toggle('admin-reviews', isAdmin);
   $('#reviewLoginNote').hidden = !!me;
   const canReview = !!me && !!rateOrder;
   $('#reviewForm').querySelectorAll('select, textarea, input, button[type="submit"]').forEach(el => { el.disabled = !canReview; });
@@ -959,6 +961,8 @@ async function renderReviews() {
   $('#reviewList').innerHTML = list.map(r => { const n = r.id.startsWith('s') ? r.help || 0 : reviewVoteCounts[r.id] || 0, on = me ? me.voted.includes(r.id) : false, p = P(r.pid);
     return `<div class="card rv"><span class="rv-av">${r.avatar ? `<img src="${escapeHtml(r.avatar)}" alt="">` : escapeHtml(initial(r.name))}</span><div class="rv-main"><div class="rv-top"><b>${escapeHtml(r.name)}</b><small>${escapeHtml(r.date)}</small></div>
     <span class="star">${stars(r.stars)}</span><p><span class="tag">${p ? p.name : 'Product'}</span></p><p>${escapeHtml(r.text)}</p>
+    ${r.reply ? `<div class="owner-reply"><b>Reply from Matcha Lavur</b><p>${escapeHtml(r.reply)}</p></div>` : ''}
+    ${isAdmin && !r.id.startsWith('s') ? `<form class="owner-reply-form" data-review-reply="${escapeHtml(r.id)}"><label for="reply-${escapeHtml(r.id)}">${r.reply ? 'Edit your reply' : 'Write a reply'}</label><textarea id="reply-${escapeHtml(r.id)}" name="reply" rows="2" maxlength="1000" placeholder="Reply to this review..." required>${escapeHtml(r.reply || '')}</textarea><button class="btn small">${r.reply ? 'Update Reply' : 'Post Reply'}</button></form>` : ''}
     ${r.id.startsWith('s') ? `<span class="helpful">Helpful (${n})</span>` : `<button class="helpful ${on ? 'on' : ''}" data-help="${r.id}">Helpful (${n})</button>`}</div>${r.img ? phImg(r.img, 'PHOTO') : ''}</div>`; }).join('') || '<div class="card empty">No reviews match this filter yet.</div>';
 }
 $('#rFilter').onclick = e => { const c = e.target.closest('[data-rf]'); if (!c) return; rf = c.dataset.rf; $$('#rFilter .chip').forEach(x => x.classList.toggle('active', x === c)); renderReviews(); };
@@ -968,6 +972,18 @@ $('#reviewList').onclick = async e => {
   if (error) return toast(error.message);
   me.voted.includes(id) ? me.voted = me.voted.filter(x => x !== id) : me.voted.push(id);
   reviewVoteCounts[id] = data; await renderReviews();
+};
+$('#reviewList').onsubmit = async e => {
+  const form = e.target.closest('[data-review-reply]');
+  if (!form) return;
+  e.preventDefault();
+  if (!isAdmin) return;
+  const reply = String(new FormData(form).get('reply') || '').trim();
+  if (!reply || reply.length > 1000) return toast('Enter a reply of no more than 1000 characters.');
+  const {error} = await supabaseClient.from('reviews').update({owner_reply: reply}).eq('id', form.dataset.reviewReply);
+  if (error) return toast(error.message);
+  toast('Reply posted.');
+  await renderReviews();
 };
 $('#stars').onclick = e => { const s = e.target.closest('[data-s]'); if (s) { rating = +s.dataset.s; renderReviews(); } };
 $('#reviewForm').onsubmit = async e => {

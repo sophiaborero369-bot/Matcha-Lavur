@@ -155,6 +155,7 @@ a.contact-item:hover,a.contact-item:focus-visible{transform:translateY(-2px);box
 
 /* ===== REVIEWS ===== */
 .review-layout{display:grid;grid-template-columns:1.6fr 1fr;gap:20px;align-items:start}
+.review-layout.admin-reviews{grid-template-columns:1fr}
 .rsum{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;margin-bottom:14px;background:linear-gradient(135deg,#fff,#effaf1)}
 .rsum .big{font-size:3rem;font-weight:800;color:var(--dark);line-height:1}.rsum .star{font-size:1.1rem;display:block}
 .bars div{display:grid;grid-template-columns:22px 1fr 28px;gap:8px;align-items:center;font-size:.82rem;color:#6b7f74}.bars i{height:8px;border-radius:6px;background:#e3f5e8;position:relative;overflow:hidden}.bars i::after{content:"";position:absolute;inset:0;width:var(--w);background:linear-gradient(90deg,#f5a623,var(--yellow));border-radius:6px}
@@ -163,6 +164,7 @@ a.contact-item:hover,a.contact-item:focus-visible{transform:translateY(-2px);box
 .rv-av img{width:100%;height:100%;border-radius:50%;object-fit:cover}
 .rv-main{flex:1}.rv-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.rv-top small{color:#8aa095}
 .rv p{margin:4px 0}.helpful{background:#e3f5e8;color:var(--g);padding:4px 12px;border-radius:999px;font-size:.8rem;font-weight:700;margin-top:6px}.helpful.on{background:var(--g);color:#fff}
+.owner-reply{margin:10px 0;padding:10px 12px;border-left:3px solid var(--g);background:#f4faf5;border-radius:0 10px 10px 0}.owner-reply b{font-size:.88rem;color:var(--dark)}.owner-reply-form{display:grid;gap:6px;margin-top:10px}.owner-reply-form label{font-size:.88rem;font-weight:700;color:var(--dark)}.owner-reply-form textarea{margin:0}.owner-reply-form .btn{justify-self:start}
 .stars button{background:none;font-size:2rem;color:#d4d4d4;padding:0 2px}.stars button.on{color:#f5a623}
 .card h4{margin-bottom:8px;color:var(--dark)}.file{display:block;margin:8px 0;font-size:.9rem;color:#555}.file input{border:0;padding:6px 0}
 #reviewForm .btn{width:100%}#reviewForm{position:sticky;top:90px}
