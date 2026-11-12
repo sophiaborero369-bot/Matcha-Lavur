@@ -64,10 +64,10 @@ const FAQ = [
   ['How long does delivery take?', 'In Davao City, drinks and sweets arrive in minutes. Powder and merchandise deliver in 2 to 4 days. Outside Davao City, only powder and merchandise can be ordered and delivery takes 2 to 4 days. Pickup is also available.']
 ];
 const SEED_REVIEWS = [
-  {id:'s1', name:'Angela R.', pid:3, stars:5, text:'The strawberry matcha is perfect. Not too sweet and the matcha is rich!', img:'images/review1.jpg', date:'Nov 2, 2026', help:12},
-  {id:'s2', name:'Marco D.', pid:15, stars:5, text:'Best matcha basque cheesecake I have tried. Arrived cold and intact.', img:'images/review2.jpg', date:'Nov 1, 2026', help:9},
-  {id:'s3', name:'Kyla S.', pid:22, stars:4, text:'Mochi was so soft. Would love more flavors next time.', img:'images/review3.jpg', date:'Oct 30, 2026', help:4},
-  {id:'s4', name:'Paolo T.', pid:5, stars:5, text:'My daily iced latte now. Smooth and not bitter at all.', img:'', date:'Oct 28, 2026', help:6},
+  {id:'s1', name:'Angela R.', pid:3, stars:5, text:'The strawberry matcha is perfect. Not too sweet and the matcha is rich!', avatar:'images/angela-profile.png', img:'images/angela.jpeg', date:'Nov 2, 2026', help:12},
+  {id:'s2', name:'Marco D.', pid:15, stars:5, text:'Best matcha basque cheesecake I have tried. Arrived cold and intact.', avatar:'images/marco-profile.jpg', img:'images/marco-review.png', date:'Nov 1, 2026', help:9},
+  {id:'s3', name:'Kyla S.', pid:22, stars:4, text:'Mochi was so soft. Would love more flavors next time.', avatar:'images/kyla.jpeg', img:'images/moch.jpg', date:'Oct 30, 2026', help:4},
+  {id:'s4', name:'Paolo T.', pid:5, stars:5, text:'My daily iced latte now. Smooth and not bitter at all.', avatar:'images/paolo-profile.jpg', img:'', date:'Oct 28, 2026', help:6},
   {id:'s5', name:'Jen L.', pid:6, stars:3, text:'Tasty frappe but it melted a bit on the way. Still good.', img:'', date:'Oct 27, 2026', help:2}
 ];
 const P = id => PRODUCTS.find(p => p.id === id);
@@ -957,7 +957,7 @@ async function renderReviews() {
     <div class="bars">${[5, 4, 3, 2, 1].map(n => { const c = all.filter(r => r.stars === n).length; return `<div><span>${n}★</span><i style="--w:${c / all.length * 100}%"></i><span>${c}</span></div>`; }).join('')}</div>`;
   const list = all.filter(r => rf === 'all' || (rf === 'photo' ? r.img : rf === '3' ? r.stars <= 3 : r.stars === +rf));
   $('#reviewList').innerHTML = list.map(r => { const n = r.id.startsWith('s') ? r.help || 0 : reviewVoteCounts[r.id] || 0, on = me ? me.voted.includes(r.id) : false, p = P(r.pid);
-    return `<div class="card rv"><span class="rv-av">${escapeHtml(initial(r.name))}</span><div class="rv-main"><div class="rv-top"><b>${escapeHtml(r.name)}</b><small>${escapeHtml(r.date)}</small></div>
+    return `<div class="card rv"><span class="rv-av">${r.avatar ? `<img src="${escapeHtml(r.avatar)}" alt="">` : escapeHtml(initial(r.name))}</span><div class="rv-main"><div class="rv-top"><b>${escapeHtml(r.name)}</b><small>${escapeHtml(r.date)}</small></div>
     <span class="star">${stars(r.stars)}</span><p><span class="tag">${p ? p.name : 'Product'}</span></p><p>${escapeHtml(r.text)}</p>
     ${r.id.startsWith('s') ? `<span class="helpful">Helpful (${n})</span>` : `<button class="helpful ${on ? 'on' : ''}" data-help="${r.id}">Helpful (${n})</button>`}</div>${r.img ? phImg(r.img, 'PHOTO') : ''}</div>`; }).join('') || '<div class="card empty">No reviews match this filter yet.</div>';
 }
