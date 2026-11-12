@@ -1,4 +1,4 @@
-:root{--g:#2e9e6b;--g2:#7bd88f;--dark:#1f4d3a;--pink:#ff7eb6;--yellow:#ffd23f;--purple:#8e6bff;--bg:#0b2117;--r:16px;--neon:#9dffbd}
+:root{--g:#2e9e6b;--g2:#7bd88f;--dark:#1f4d3a;--pink:#ff7eb6;--yellow:#ffd23f;--purple:#8e6bff;--bg:#687a26;--r:16px;--neon:#9dffbd}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:#23332b;line-height:1.5}
 [hidden]{display:none!important}
@@ -257,7 +257,7 @@ footer{text-align:center;padding:20px;background:var(--dark);color:#d8f5e0;font-
 .img-card .modal-actions{justify-content:center}
 
 /* ===== MATCHA NEON FINISH ===== */
-body{color:#f3fff5;background-color:#0b2117;background-image:radial-gradient(ellipse at 50% 28%,#17472d 0%,transparent 58%),radial-gradient(ellipse at 8% 16%,#0b3824 0%,transparent 38%),radial-gradient(ellipse at 92% 72%,#103522 0%,transparent 42%),repeating-linear-gradient(135deg,transparent 0 72px,#74f5a00a 72px 73px,transparent 73px 144px),linear-gradient(145deg,#071b13,#0b261a 52%,#071a12);background-size:auto,auto,auto,auto,auto;background-attachment:fixed}
+body{color:#f3fff5;background-color:#687a26;background-image:radial-gradient(ellipse at 18% 24%,#74843155,transparent 44%),radial-gradient(ellipse at 84% 72%,#5f712055,transparent 48%),repeating-linear-gradient(135deg,transparent 0 72px,#d2e27a08 72px 73px,transparent 73px 144px),linear-gradient(145deg,#6a7c28,#667724 52%,#687a26);background-size:auto,auto,auto,auto;background-attachment:fixed}
 main{position:relative}
 .card,.about-text,.video-desc,.gallery figure,.prod,.rsum,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row,.flip .front{color:#23332b}
 .title,.sec-h{color:#f3fff5;text-shadow:0 0 10px #69f99a77,0 1px 2px #04140c}
