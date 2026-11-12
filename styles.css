@@ -1,4 +1,4 @@
-:root{--g:#2e9e6b;--g2:#7bd88f;--dark:#1f4d3a;--pink:#ff7eb6;--yellow:#ffd23f;--purple:#8e6bff;--bg:#f2fbf3;--r:16px;--neon:#9dffbd}
+:root{--g:#2e9e6b;--g2:#7bd88f;--dark:#1f4d3a;--pink:#ff7eb6;--yellow:#ffd23f;--purple:#8e6bff;--bg:#f2fbf3;--surface:#eff8ef;--r:16px;--neon:#9dffbd}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:#23332b;line-height:1.5}
 [hidden]{display:none!important}
@@ -309,3 +309,6 @@ nav button:hover,nav button.active{box-shadow:0 0 12px #9dffbd55,inset 0 0 0 1px
 .video-desc{background:#edf8ed;color:#1f4d3a;border-left-color:#7bd88f}
 .video-desc b{color:#1f4d3a}
 .video-desc p{color:#385347}
+input,select,textarea,.btn.ghost,.card,.auth-card .tab.active,.soc,#authMsg,.flip .front,.about-text,.delivery-zone,.delivery-category,.video-desc,.gallery figure,.chip:not(.active),.prod,.provider-choice,.seg label,.stat,.cart-row,.qty button,.mini div,.msg.them,.faq-i,.faq-i button,.stock-row,.modal-card,#auth #cancelLogin,.heart,.av,#toast::before{background-color:var(--surface)}
+.rsum{background:linear-gradient(135deg,var(--surface),#e8f4e9)}
+.btn.ghost:hover,.btn.ghost:focus-visible,.faq-i button:hover,#auth #cancelLogin:hover,#auth #cancelLogin:focus-visible{background-color:#e4f2e5}
