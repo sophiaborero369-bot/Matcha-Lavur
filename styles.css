@@ -257,7 +257,7 @@ footer{text-align:center;padding:20px;background:var(--dark);color:#d8f5e0;font-
 .img-card .modal-actions{justify-content:center}
 
 /* ===== MATCHA NEON FINISH ===== */
-body{color:#23332b;background-color:#1f6b4a;background-image:radial-gradient(ellipse at 12% 18%,#7df5ab25,transparent 38%),radial-gradient(ellipse at 88% 72%,#9dffbd20,transparent 42%),linear-gradient(135deg,#0f3d2b,#1f6b4a 55%,#2e9e6b);background-attachment:fixed}
+body{color:#23332b;background-color:#1f6b4a;background-image:radial-gradient(circle at 15% 20%,#3fbf7f55,transparent 40%),radial-gradient(circle at 85% 80%,#9bdc5a44,transparent 45%),linear-gradient(135deg,#0f3d2b,#1f6b4a 55%,#2e9e6b);background-attachment:fixed}
 main{position:relative}
 .card,.about-text,.video-desc,.gallery figure,.prod,.rsum,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row,.flip .front{color:#23332b}
 .title,.sec-h{color:#f3fff5;text-shadow:0 0 10px #69f99a77,0 1px 2px #04140c}
@@ -270,7 +270,7 @@ nav button:hover,nav button.active{background:#ffffff2e;box-shadow:inset 0 0 0 1
 .btn:not(.ghost){border:0;box-shadow:0 4px 12px #2e9e6b44}
 .btn:not(.ghost):hover,.btn:not(.ghost):focus-visible{box-shadow:0 0 0 2px #9dffbd99,0 0 22px #58ef91a0,0 4px 18px #2e9e6b66}
 .btn.ghost{border-color:var(--g);color:var(--g);box-shadow:none}
-.hero{border:1px solid #a6ffc2;background:linear-gradient(90deg,#e9ffe8f0 0%,#e3ffe5bb 44%,#e3ffe500 82%),url("hero.jpg") center/cover no-repeat,linear-gradient(135deg,#c9f7d2,#fff3b0 55%,#ffd1e6);box-shadow:0 0 0 1px #48f29277,0 0 18px #36ee8a88,0 0 42px #28c96b55,0 16px 38px #0007}
+.hero{border:1px solid #a6ffc2;background:linear-gradient(90deg,#eefbe6e6 0%,#eefbe6aa 45%,#eefbe600 80%),url("hero.jpg") center/cover no-repeat,linear-gradient(135deg,#c9f7d2,#fff3b0 55%,#ffd1e6);box-shadow:0 0 0 1px #48f29277,0 0 18px #36ee8a88,0 0 42px #28c96b55,0 16px 38px #0007}
 .hero:hover{box-shadow:0 0 0 2px #c7ffd7,0 0 20px #fff,0 0 42px #36ef8c,0 18px 42px #0009}
 .vcard,.flip .front,.owner-card,.about-text,.rsum,.prod,.rv,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row{filter:none}
 .about-text,.rsum,.prod,.owner-card,.stat,.order,.cart-row,.mini div,.chat,.faq-i,.stock-row{border:0}
